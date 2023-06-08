@@ -1,3 +1,4 @@
+from typing import List
 import opendp.prelude as dp
 dp.enable_features("contrib")
 
@@ -97,7 +98,7 @@ def test_odometer_chain_ot():
         Q=dp.Measurement
     )
 
-    sc_odo2 = dp.t.make_cast_default(TIA=str, TOA=int) >> sc_odo
+    sc_odo2 = dp.space_of(List[str]) >> dp.t.part_cast_default(TOA=int) >> sc_odo
 
     sc_qbl2: dp.Queryable = sc_odo2(["1"] * 200)
 
