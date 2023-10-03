@@ -11,6 +11,9 @@ use dashu::{
 mod gumbel;
 pub use gumbel::GumbelPSRN;
 
+mod exponential;
+pub use exponential::ExponentialPSRN;
+
 mod uniform;
 pub use uniform::UniformPSRN;
 
@@ -65,15 +68,6 @@ impl ODPRound for Up {
     const UBIG: UBig = UBig::ONE;
     type Complement = Down;
 }
-
-// fn psrn_value<TI: PSRN<Edge = Rational>, TO: CastInternalRational + PartialEq>(
-//     psrn: &mut TI,
-// ) -> Fallible<TO> {
-//     while TO::from_rational(psrn.edge(Lower)?) != TO::from_rational(psrn.edge(Upper)?) {
-//         psrn.refine()?;
-//     }
-//     Ok(TO::from_rational(psrn.edge(Lower)?))
-// }
 
 #[cfg(test)]
 mod test;

@@ -63,7 +63,7 @@ impl TryFrom<&str> for Optimize {
 /// # Arguments
 /// * `input_domain` - Domain of the input vector. Must be a non-nullable VectorDomain.
 /// * `input_metric` - Metric on the input domain. Must be LInfDistance
-/// * `scale` - Higher scales are more private.
+/// * `scale` - Noise scale for the Gumbel distribution.
 /// * `optimize` - Indicate whether to privately return the "Max" or "Min"
 ///
 /// # Generics
@@ -80,6 +80,10 @@ where
     QO: CastInternalRational + DistanceConstant<TIA> + Float,
 {
     if input_domain.element_domain.nullable() {
+        return fallible!(MakeMeasurement, "values must be non-null");
+    }
+
+    if input_domain.element_domain.nullable() {
         return fallible!(MakeMeasurement, "input domain must be non-nullable");
     }
 
@@ -87,12 +91,12 @@ where
         return fallible!(MakeMeasurement, "scale must not be negative");
     }
 
-    let scale_frac = scale.clone().into_rational()?;
+    let r_scale = scale.clone().into_rational()?;
 
     Measurement::new(
         input_domain,
         Function::new_fallible(move |arg: &Vec<TIA>| {
-            select_score(arg.iter().cloned(), optimize.clone(), scale_frac.clone())
+            select_score(arg.iter().cloned(), optimize.clone(), r_scale.clone())
         }),
         input_metric.clone(),
         MaxDivergence::default(),
