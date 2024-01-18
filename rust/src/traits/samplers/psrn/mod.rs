@@ -14,6 +14,9 @@ mod test;
 mod gumbel;
 pub use gumbel::GumbelPSRN;
 
+mod tulap;
+pub use tulap::TulapPSRN;
+
 mod uniform;
 pub use uniform::UniformPSRN;
 
@@ -67,4 +70,33 @@ impl ODPRound for Down {
 impl ODPRound for Up {
     const UBIG: UBig = UBig::ONE;
     type Complement = Down;
+}
+
+/// Check if `psrn` is greater than `threshold`
+pub fn check_above<RV: PSRN>(psrn: &mut RV, threshold: &RV::Edge) -> Fallible<bool> {
+    loop {
+        if psrn.lower().as_ref() > Some(threshold) {
+            return Ok(true);
+        }
+        if psrn.upper().as_ref() < Some(threshold) {
+            return Ok(false);
+        }
+        psrn.refine()?;
+    }
+}
+
+/// Refine `psrn` until both bounds of interval round to same TO
+pub fn pinpoint<TI: PSRN<Edge = FBig>, TO: RoundCast<FBig> + PartialEq>(
+    psrn: &mut TI,
+) -> Fallible<TO> {
+    loop {
+        psrn.refine()?;
+        let Some((l, r)) = psrn.lower().zip(psrn.upper()) else {
+            continue;
+        };
+        let (l, r) = (TO::round_cast(l)?, TO::round_cast(r)?);
+        if l == r {
+            return Ok(l);
+        }
+    }
 }
