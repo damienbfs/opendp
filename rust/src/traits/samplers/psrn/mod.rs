@@ -1,10 +1,13 @@
 use std::fmt::Debug;
 
 use dashu::{
-    float::{round::{
-        mode::{Down, Up},
-        ErrorBounds,
-    }, FBig},
+    float::{
+        round::{
+            mode::{Down, Up},
+            ErrorBounds,
+        },
+        FBig,
+    },
     integer::UBig,
 };
 
