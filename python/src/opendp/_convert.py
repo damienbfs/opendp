@@ -36,21 +36,19 @@ INT_SIZES = {
 }
 _ERROR_URL_298 = "https://github.com/opendp/opendp/discussions/298"
 
+
 def check_and_cast_scalar(expected, value):
     inferred = RuntimeType.infer(value)
-    
-    if inferred in ATOM_EQUIVALENCE_CLASSES:
-        if expected not in ATOM_EQUIVALENCE_CLASSES[inferred]: # type: ignore[index]
-            if not isinstance(value, int):
-                raise TypeError(f"inferred type is {inferred}, expected {expected}. See {_ERROR_URL_298}")
-            value = float(value)
-            value = check_and_cast_scalar(expected, value)
-    else:
-        if expected != inferred:
-            if not isinstance(value, int):
-                raise TypeError(f"inferred type is {inferred}, expected {expected}. See {_ERROR_URL_298}") 
-            value = float(value)
-            value = check_and_cast_scalar(expected, value)
+    inferred_in_eq_class = inferred in ATOM_EQUIVALENCE_CLASSES
+    if (
+        (inferred_in_eq_class and expected not in ATOM_EQUIVALENCE_CLASSES[inferred]) # type: ignore[index]
+        or
+        (not inferred_in_eq_class and expected != inferred)
+    ):
+        if not isinstance(value, int):
+            raise TypeError(f"inferred type is {inferred}, expected {expected}. See {_ERROR_URL_298}")
+        value = float(value)
+        value = check_and_cast_scalar(expected, value)
             
     if expected in INT_SIZES:
         check_c_int_cast(value, expected)
