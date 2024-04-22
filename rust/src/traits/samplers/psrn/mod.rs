@@ -1,12 +1,9 @@
 use std::fmt::Debug;
 
 use dashu::{
-    float::{
-        round::{
-            mode::{Down, Up},
-            ErrorBounds,
-        },
-        FBig,
+    float::round::{
+        mode::{Down, Up},
+        ErrorBounds,
     },
     integer::UBig,
 };
@@ -62,17 +59,17 @@ pub trait PSRN {
 
 pub trait ODPRound: ErrorBounds {
     const UBIG: UBig;
-    type Complement: ODPRound<Complement = Self>;
+    type C: ODPRound<C = Self>;
 }
 
 impl ODPRound for Down {
     const UBIG: UBig = UBig::ZERO;
-    type Complement = Up;
+    type C = Up;
 }
 
 impl ODPRound for Up {
     const UBIG: UBig = UBig::ONE;
-    type Complement = Down;
+    type C = Down;
 }
 
 /// Check if `psrn` is greater than `threshold`
@@ -89,9 +86,10 @@ pub fn check_above<RV: PSRN>(psrn: &mut RV, threshold: &RV::Edge) -> Fallible<bo
 }
 
 /// Refine `psrn` until both bounds of interval round to same TO
-pub fn pinpoint<TI: PSRN<Edge = FBig>, TO: RoundCast<FBig> + PartialEq>(
-    psrn: &mut TI,
-) -> Fallible<TO> {
+pub fn pinpoint<TI: PSRN, TO: RoundCast<TI::Edge> + PartialEq>(psrn: &mut TI) -> Fallible<TO>
+where
+    TI::Edge: std::fmt::Debug,
+{
     loop {
         psrn.refine()?;
         let Some((l, r)) = psrn.lower().zip(psrn.upper()) else {
