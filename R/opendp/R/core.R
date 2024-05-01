@@ -202,7 +202,7 @@ measurement_invoke <- function(
   arg
 ) {
   if (identical(this, new("externalptr"))) {
-    stop("Measurement is a null pointer. Reusing measurments from previous sessions is unsupported.")
+    stop("Measurement is a null pointer. Reusing measurements from previous sessions is unsupported.")
   }
   # Standardize type arguments.
   .T.arg <- measurement_input_carrier_type(this)
