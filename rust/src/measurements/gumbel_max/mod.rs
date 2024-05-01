@@ -16,9 +16,12 @@ use crate::{
 };
 
 use crate::traits::{
-    samplers::{CastInternalRational, GumbelPSRN},
+    samplers::{CastInternalRational, GumbelPSRN, PSRN},
     DistanceConstant,
 };
+
+#[cfg(test)]
+mod test;
 
 #[derive(PartialEq, Clone)]
 pub enum Optimize {
@@ -160,7 +163,3 @@ where
         .ok_or_else(|| err!(FailedFunction, "there must be at least one candidate"))?
         .map(|v| v.0)
 }
-
-#[cfg(feature = "floating-point")]
-#[cfg(test)]
-mod test;
