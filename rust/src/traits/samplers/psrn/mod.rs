@@ -72,32 +72,16 @@ impl ODPRound for Up {
     type C = Down;
 }
 
-/// Check if `psrn` is greater than `threshold`
-pub fn check_above<RV: PSRN>(psrn: &mut RV, threshold: &RV::Edge) -> Fallible<bool> {
-    loop {
-        if psrn.lower().as_ref() > Some(threshold) {
-            return Ok(true);
-        }
-        if psrn.upper().as_ref() < Some(threshold) {
-            return Ok(false);
-        }
-        psrn.refine()?;
-    }
-}
-
 /// Refine `psrn` until both bounds of interval round to same TO
-pub fn pinpoint<TI: PSRN, TO: RoundCast<TI::Edge> + PartialEq>(psrn: &mut TI) -> Fallible<TO>
-where
-    TI::Edge: std::fmt::Debug,
-{
-    loop {
-        psrn.refine()?;
+pub fn pinpoint<TI: PSRN, TO: RoundCast<TI::Edge> + PartialEq>(psrn: &mut TI) -> Fallible<TO> {
+    Ok(loop {
         let Some((l, r)) = psrn.lower().zip(psrn.upper()) else {
             continue;
         };
         let (l, r) = (TO::round_cast(l)?, TO::round_cast(r)?);
         if l == r {
-            return Ok(l);
+            break l;
         }
-    }
+        psrn.refine()?;
+    })
 }

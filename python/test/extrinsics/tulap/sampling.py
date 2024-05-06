@@ -1,8 +1,3 @@
-import numpy as np  # type: ignore[import]
-import math
-import numpy.random as random  # type: ignore[import]
-from scipy.stats import norm, geom, uniform  # type: ignore[import]
-
 """
 m - real number
 b - (0, 1)
@@ -12,7 +7,9 @@ Note:
 Tulap random variable Tulap(m, b, q) is continuous and symmetric of m
 """
 
-random.seed(1000)
+import numpy as np  # type: ignore[import]
+import math
+from scipy.stats import norm, geom, uniform  # type: ignore[import]
 
 
 def ptulap(t, m=0, b=0, q=0):

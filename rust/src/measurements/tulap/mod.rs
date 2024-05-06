@@ -37,10 +37,10 @@ pub fn make_tulap(
         );
     }
     if epsilon.is_sign_negative() || delta.is_sign_negative() {
-        return fallible!(FailedMap, "epsilon and delta must not be negative");
+        return fallible!(MakeMeasurement, "epsilon and delta must not be negative");
     }
     if delta > 1. {
-        return fallible!(FailedMap, "delta must not exceed 1");
+        return fallible!(MakeMeasurement, "delta must not exceed 1");
     }
     let f_epsilon = FBig::try_from(epsilon)?;
     let r_delta = RBig::try_from(delta)?;
@@ -48,8 +48,7 @@ pub fn make_tulap(
         input_domain,
         Function::new_fallible(move |&arg: &f64| {
             let shift = RBig::try_from(arg).unwrap_or(RBig::ZERO);
-            let mut tulap = TulapPSRN::new(shift, f_epsilon.clone(), r_delta.clone())?;
-            pinpoint::<TulapPSRN, f64>(&mut tulap)
+            pinpoint(&mut TulapPSRN::new(shift, f_epsilon.clone(), r_delta.clone())?)
         }),
         input_metric,
         FixedSmoothedMaxDivergence::default(),
