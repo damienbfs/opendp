@@ -37,7 +37,16 @@ INT_SIZES = {
 _ERROR_URL_298 = "https://github.com/opendp/opendp/discussions/298"
 
 
-def check_and_cast_scalar(expected, value):
+def _check_and_cast_scalar(expected, value):
+    '''
+    
+    If expected is not one of a small number of Rust types:
+    >>> _check_and_cast_scalar('f32', 1.0)
+    ???
+    >>> _check_and_cast_scalar('f32', 1)
+    ???
+
+    '''
     inferred = RuntimeType.infer(value)
     inferred_in_eq_class = inferred in ATOM_EQUIVALENCE_CLASSES
     if (
@@ -48,7 +57,7 @@ def check_and_cast_scalar(expected, value):
         if not isinstance(value, int):
             raise TypeError(f"inferred type is {inferred}, expected {expected}. See {_ERROR_URL_298}")
         value = float(value)
-        value = check_and_cast_scalar(expected, value)
+        value = _check_and_cast_scalar(expected, value)
             
     if expected in INT_SIZES:
         check_c_int_cast(value, expected)
@@ -103,7 +112,7 @@ def py_to_c(value: Any, c_type, type_name: RuntimeTypeDescriptor = None) -> Any:
 
         rust_type = str(type_name)
         
-        value = check_and_cast_scalar(rust_type, value)
+        value = _check_and_cast_scalar(rust_type, value)
 
         if rust_type in ATOM_MAP:
             return ctypes.byref(ATOM_MAP[rust_type](value))
@@ -276,7 +285,7 @@ def _scalar_to_slice(val, type_name: str) -> FfiSlicePtr:
     np = import_optional_dependency('numpy', raise_error=False)
     if np is not None and isinstance(val, np.ndarray):
         val = val.item() # pragma: no cover
-    val = check_and_cast_scalar(type_name, val)
+    val = _check_and_cast_scalar(type_name, val)
     # ctypes.byref has edge-cases that cause use-after-free errors. ctypes.pointer fixes these edge-cases
     return _wrap_in_slice(ctypes.pointer(ATOM_MAP[type_name](val)), 1)
 
@@ -344,7 +353,7 @@ def _vector_to_slice(val: Sequence[Any], type_name: RuntimeType) -> FfiSlicePtr:
         ffi_slice.depends_on(c_repr)
         return ffi_slice
 
-    val = [check_and_cast_scalar(inner_type_name, v) for v in val]
+    val = [_check_and_cast_scalar(inner_type_name, v) for v in val]
 
     if inner_type_name == "String":
         def str_to_slice(val):
@@ -417,7 +426,7 @@ def _tuple_to_slice(val: Tuple[Any, ...], type_name: Union[RuntimeType, str]) ->
 
     # check that actual type can be represented by the inner_type_name
     val = tuple(
-        check_and_cast_scalar(inner_type_name, val[i])
+        _check_and_cast_scalar(inner_type_name, val[i])
         for i, inner_type_name in zip(range(len(val)), inner_type_names)
     )
     
@@ -453,8 +462,8 @@ def _hashmap_to_slice(val: Dict[Any, Any], type_name: RuntimeType) -> FfiSlicePt
         raise TypeError(f"Expected type is {type_name} but input data is not a dict.")
 
     val = {
-        check_and_cast_scalar(key_type, k):
-            check_and_cast_scalar(val_type, v) if val_type != "ExtrinsicObject" else v
+        _check_and_cast_scalar(key_type, k):
+            _check_and_cast_scalar(val_type, v) if val_type != "ExtrinsicObject" else v
         for k, v in val.items()
     }
     
