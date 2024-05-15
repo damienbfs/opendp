@@ -1,7 +1,7 @@
 #[cfg(feature = "ffi")]
 mod ffi;
 
-use dashu::integer::Sign;
+use dashu::base::Sign;
 use opendp_derive::bootstrap;
 
 use crate::{
@@ -18,7 +18,7 @@ use crate::traits::{
     DistanceConstant,
 };
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum Optimize {
     Max,
     Min,
@@ -102,20 +102,6 @@ where
     )
 }
 
+#[cfg(feature = "floating-point")]
 #[cfg(test)]
-pub mod test_exponential {
-    use crate::error::Fallible;
-
-    use super::*;
-
-    #[test]
-    fn test_exponential() -> Fallible<()> {
-        let input_domain = VectorDomain::new(AtomDomain::default());
-        let input_metric = LInfDistance::default();
-        let de = make_report_noisy_max_gumbel(input_domain, input_metric, 1., Optimize::Max)?;
-        let release = de.invoke(&vec![1., 2., 3., 2., 1.])?;
-        println!("{:?}", release);
-
-        Ok(())
-    }
-}
+mod test;

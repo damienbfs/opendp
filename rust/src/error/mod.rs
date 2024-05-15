@@ -117,6 +117,13 @@ impl From<String> for Error {
     }
 }
 
+#[cfg(feature = "polars")]
+impl From<Error> for PolarsError {
+    fn from(value: Error) -> Self {
+        PolarsError::ComputeError(value.to_string().into())
+    }
+}
+
 impl Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -194,25 +201,18 @@ impl<T, E: Debug> ExplainUnwrap for Result<T, E> {
         self.unwrap()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_error_from_conversion_error() {
-        let e: Error = ConversionError::OutOfBounds.into();
-        assert_eq!(e.variant, ErrorVariant::FailedCast);
-    }
-
-    #[cfg(feature = "polars")]
-    #[test]
-    fn test_error_from_polars_error() {
-        let e: Error = PolarsError::ColumnNotFound("A".into()).into();
-        assert_eq!(e.variant, ErrorVariant::FailedFunction);
-        assert_eq!(
-            e.message,
-            Some("ColumnNotFound(ErrString(\"A\"))".to_string())
-        );
+pub trait WithVariant {
+    fn with_variant(self, variant: ErrorVariant) -> Self;
+}
+impl<T> WithVariant for Fallible<T> {
+    fn with_variant(self, v: ErrorVariant) -> Self {
+        self.map_err(|e| Error {
+            variant: v,
+            message: e.message,
+            backtrace: e.backtrace,
+        })
     }
 }
+
+#[cfg(test)]
+mod test;
