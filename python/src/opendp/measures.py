@@ -54,7 +54,7 @@ def _measure_free(
 
 
 def fixed_smoothed_max_divergence(
-    T: RuntimeTypeDescriptor
+    T: RuntimeTypeDescriptor = "f64"
 ) -> Measure:
     r"""Construct an instance of the `FixedSmoothedMaxDivergence` measure.
 
@@ -84,7 +84,7 @@ def fixed_smoothed_max_divergence(
 
 
 def max_divergence(
-    T: RuntimeTypeDescriptor
+    T: RuntimeTypeDescriptor = "f64"
 ) -> Measure:
     r"""Construct an instance of the `MaxDivergence` measure.
 
@@ -192,7 +192,7 @@ def measure_type(
 
 
 def smoothed_max_divergence(
-    T: RuntimeTypeDescriptor
+    T: RuntimeTypeDescriptor = "f64"
 ) -> Measure:
     r"""Construct an instance of the `SmoothedMaxDivergence` measure.
 
@@ -251,7 +251,7 @@ def user_divergence(
 
 
 def zero_concentrated_divergence(
-    T: RuntimeTypeDescriptor
+    T: RuntimeTypeDescriptor = "f64"
 ) -> Measure:
     r"""Construct an instance of the `ZeroConcentratedDivergence` measure.
 

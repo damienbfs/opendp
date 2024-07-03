@@ -279,21 +279,19 @@ make_fix_delta <- function(
 ) {
   assert_features("contrib")
 
-  # Standardize type arguments.
-  .T.delta <- get_atom(measurement_output_distance_type(measurement))
-
+  # No type arguments to standardize.
   log <- new_constructor_log("make_fix_delta", "combinators", new_hashtab(
     list("measurement", "delta"),
-    list(measurement, delta)
+    list(measurement, unbox2(delta))
   ))
 
   # Assert that arguments are correctly typed.
-  rt_assert_is_similar(expected = .T.delta, inferred = rt_infer(delta))
+  rt_assert_is_similar(expected = f64, inferred = rt_infer(delta))
 
   # Call wrapper function.
   output <- .Call(
     "combinators__make_fix_delta",
-    measurement, delta, rt_parse(.T.delta),
+    measurement, delta,
     log, PACKAGE = "opendp")
   output
 }
@@ -316,7 +314,7 @@ then_fix_delta <- function(
 
   log <- new_constructor_log("then_fix_delta", "combinators", new_hashtab(
     list("measurement", "delta"),
-    list(measurement, delta)
+    list(measurement, unbox2(delta))
   ))
 
   make_chain_dyn(
@@ -403,7 +401,7 @@ then_population_amplification <- function(
 #' pureDP to fixed approxDP constructor
 #'
 #' Constructs a new output measurement where the output measure
-#' is casted from `MaxDivergence<QO>` to `FixedSmoothedMaxDivergence<QO>`.
+#' is casted from `MaxDivergence` to `FixedSmoothedMaxDivergence`.
 #'
 #' [make_pureDP_to_fixed_approxDP in Rust documentation.](https://docs.rs/opendp/latest/opendp/combinators/fn.make_pureDP_to_fixed_approxDP.html)
 #'
@@ -463,7 +461,7 @@ then_pureDP_to_fixed_approxDP <- function(
 #' pureDP to zCDP constructor
 #'
 #' Constructs a new output measurement where the output measure
-#' is casted from `MaxDivergence<QO>` to `ZeroConcentratedDivergence<QO>`.
+#' is casted from `MaxDivergence` to `ZeroConcentratedDivergence`.
 #'
 #' [make_pureDP_to_zCDP in Rust documentation.](https://docs.rs/opendp/latest/opendp/combinators/fn.make_pureDP_to_zCDP.html)
 #'
@@ -626,7 +624,7 @@ then_sequential_composition <- function(
 #' zCDP to approxDP constructor
 #'
 #' Constructs a new output measurement where the output measure
-#' is casted from `ZeroConcentratedDivergence<QO>` to `SmoothedMaxDivergence<QO>`.
+#' is casted from `ZeroConcentratedDivergence` to `SmoothedMaxDivergence`.
 #'
 #' [make_zCDP_to_approxDP in Rust documentation.](https://docs.rs/opendp/latest/opendp/combinators/fn.make_zCDP_to_approxDP.html)
 #'

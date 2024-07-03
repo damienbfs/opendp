@@ -102,21 +102,20 @@ SEXP combinators__make_chain_tt(
 
 
 SEXP combinators__make_fix_delta(
-    SEXP measurement, SEXP delta, SEXP T_delta, SEXP log
+    SEXP measurement, SEXP delta, SEXP log
 ) {
     // Convert arguments to c types.
     PROTECT(measurement);
     PROTECT(delta);
-    PROTECT(T_delta);
     PROTECT(log);
 
     AnyMeasurement * c_measurement = sexp_to_anymeasurementptr(measurement);
-    AnyObject * c_delta = sexp_to_anyobjectptr(delta, T_delta);
+    double c_delta = Rf_asReal(delta);
 
     // Call library function.
     FfiResult_____AnyMeasurement _result = opendp_combinators__make_fix_delta(c_measurement, c_delta);
 
-    UNPROTECT(4);
+    UNPROTECT(3);
     if(_result.tag == Err_____AnyMeasurement)
         return(extract_error(_result.err));
     AnyMeasurement* _return_value = _result.ok;

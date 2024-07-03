@@ -13,7 +13,7 @@ NULL
 #' @return Measure
 #' @export
 fixed_smoothed_max_divergence <- function(
-  .T
+  .T = "f64"
 ) {
   # Standardize type arguments.
   .T <- rt_parse(type_name = .T)
@@ -41,7 +41,7 @@ fixed_smoothed_max_divergence <- function(
 #' @return Measure
 #' @export
 max_divergence <- function(
-  .T
+  .T = "f64"
 ) {
   # Standardize type arguments.
   .T <- rt_parse(type_name = .T)
@@ -141,7 +141,7 @@ measure_type <- function(
 #' @return Measure
 #' @export
 smoothed_max_divergence <- function(
-  .T
+  .T = "f64"
 ) {
   # Standardize type arguments.
   .T <- rt_parse(type_name = .T)
@@ -199,7 +199,7 @@ user_divergence <- function(
 #' @return Measure
 #' @export
 zero_concentrated_divergence <- function(
-  .T
+  .T = "f64"
 ) {
   # Standardize type arguments.
   .T <- rt_parse(type_name = .T)

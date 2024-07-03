@@ -26,7 +26,7 @@ NULL
 #' * Input Domain:   `MapDomain<AtomDomain<K>, AtomDomain<CI>>`
 #' * Output Type:    `Queryable<K, CO>`
 #' * Input Metric:   `L1Distance<CI>`
-#' * Output Measure: `MaxDivergence<CO>`
+#' * Output Measure: `MaxDivergence`
 #'
 #' @concept measurements
 #' @param input_domain undocumented
@@ -147,7 +147,7 @@ then_alp_queryable <- function(
 #' @param input_metric Metric of the data type to be privatized.
 #' @param scale Noise scale parameter for the gaussian distribution. `scale` == standard_deviation.
 #' @param k The noise granularity in terms of 2^k.
-#' @param .MO Output Measure. The only valid measure is `ZeroConcentratedDivergence<T>`.
+#' @param .MO Output Measure. The only valid measure is `ZeroConcentratedDivergence`.
 #' @return Measurement
 #' @examples
 #' library(opendp)
@@ -178,29 +178,27 @@ make_gaussian <- function(
   input_metric,
   scale,
   k = NULL,
-  .MO = "ZeroConcentratedDivergence<.QO>"
+  .MO = "ZeroConcentratedDivergence"
 ) {
   assert_features("contrib")
 
   # Standardize type arguments.
-  .MO <- rt_parse(type_name = .MO, generics = list(".QO"))
-  .QO <- get_atom_or_infer(.MO, scale)
-  .MO <- rt_substitute(.MO, .QO = .QO)
+  .MO <- rt_parse(type_name = .MO)
   .T.k <- new_runtime_type(origin = "Option", args = list(i32))
 
   log <- new_constructor_log("make_gaussian", "measurements", new_hashtab(
     list("input_domain", "input_metric", "scale", "k", "MO"),
-    list(input_domain, input_metric, scale, k, .MO)
+    list(input_domain, input_metric, unbox2(scale), k, .MO)
   ))
 
   # Assert that arguments are correctly typed.
-  rt_assert_is_similar(expected = .QO, inferred = rt_infer(scale))
+  rt_assert_is_similar(expected = f64, inferred = rt_infer(scale))
   rt_assert_is_similar(expected = .T.k, inferred = rt_infer(k))
 
   # Call wrapper function.
   output <- .Call(
     "measurements__make_gaussian",
-    input_domain, input_metric, scale, k, .MO, .QO, rt_parse(.T.k),
+    input_domain, input_metric, scale, k, .MO, rt_parse(.T.k),
     log, PACKAGE = "opendp")
   output
 }
@@ -213,7 +211,7 @@ make_gaussian <- function(
 #' @param lhs The prior transformation or metric space.
 #' @param scale Noise scale parameter for the gaussian distribution. `scale` == standard_deviation.
 #' @param k The noise granularity in terms of 2^k.
-#' @param .MO Output Measure. The only valid measure is `ZeroConcentratedDivergence<T>`.
+#' @param .MO Output Measure. The only valid measure is `ZeroConcentratedDivergence`.
 #' @return Measurement
 #' @examples
 #' library(opendp)
@@ -243,12 +241,12 @@ then_gaussian <- function(
   lhs,
   scale,
   k = NULL,
-  .MO = "ZeroConcentratedDivergence<.QO>"
+  .MO = "ZeroConcentratedDivergence"
 ) {
 
   log <- new_constructor_log("then_gaussian", "measurements", new_hashtab(
     list("scale", "k", "MO"),
-    list(scale, k, .MO)
+    list(unbox2(scale), k, .MO)
   ))
 
   make_chain_dyn(
@@ -279,43 +277,40 @@ then_gaussian <- function(
 #' * Input Domain:   `D`
 #' * Output Type:    `D::Carrier`
 #' * Input Metric:   `D::InputMetric`
-#' * Output Measure: `MaxDivergence<QO>`
+#' * Output Measure: `MaxDivergence`
 #'
 #' @concept measurements
 #' @param input_domain undocumented
 #' @param input_metric undocumented
 #' @param scale undocumented
 #' @param bounds undocumented
-#' @param .QO undocumented
 #' @return Measurement
 #' @export
 make_geometric <- function(
   input_domain,
   input_metric,
   scale,
-  bounds = NULL,
-  .QO = NULL
+  bounds = NULL
 ) {
   assert_features("contrib")
 
   # Standardize type arguments.
-  .QO <- parse_or_infer(type_name = .QO, public_example = scale)
   .T <- get_atom(get_carrier_type(input_domain))
   .OptionT <- new_runtime_type(origin = "Option", args = list(new_runtime_type(origin = "Tuple", args = list(.T, .T))))
 
   log <- new_constructor_log("make_geometric", "measurements", new_hashtab(
-    list("input_domain", "input_metric", "scale", "bounds", "QO"),
-    list(input_domain, input_metric, scale, bounds, .QO)
+    list("input_domain", "input_metric", "scale", "bounds"),
+    list(input_domain, input_metric, unbox2(scale), bounds)
   ))
 
   # Assert that arguments are correctly typed.
-  rt_assert_is_similar(expected = .QO, inferred = rt_infer(scale))
+  rt_assert_is_similar(expected = f64, inferred = rt_infer(scale))
   rt_assert_is_similar(expected = .OptionT, inferred = rt_infer(bounds))
 
   # Call wrapper function.
   output <- .Call(
     "measurements__make_geometric",
-    input_domain, input_metric, scale, bounds, .QO, .T, .OptionT,
+    input_domain, input_metric, scale, bounds, .T, .OptionT,
     log, PACKAGE = "opendp")
   output
 }
@@ -328,19 +323,17 @@ make_geometric <- function(
 #' @param lhs The prior transformation or metric space.
 #' @param scale undocumented
 #' @param bounds undocumented
-#' @param .QO undocumented
 #' @return Measurement
 #' @export
 then_geometric <- function(
   lhs,
   scale,
-  bounds = NULL,
-  .QO = NULL
+  bounds = NULL
 ) {
 
   log <- new_constructor_log("then_geometric", "measurements", new_hashtab(
-    list("scale", "bounds", "QO"),
-    list(scale, bounds, .QO)
+    list("scale", "bounds"),
+    list(unbox2(scale), bounds)
   ))
 
   make_chain_dyn(
@@ -348,8 +341,7 @@ then_geometric <- function(
       output_domain(lhs),
       output_metric(lhs),
       scale = scale,
-      bounds = bounds,
-      .QO = .QO),
+      bounds = bounds),
     lhs,
     log)
 }
@@ -380,43 +372,39 @@ then_geometric <- function(
 #' * Input Domain:   `D`
 #' * Output Type:    `D::Carrier`
 #' * Input Metric:   `D::InputMetric`
-#' * Output Measure: `MaxDivergence<QO>`
+#' * Output Measure: `MaxDivergence`
 #'
 #' @concept measurements
 #' @param input_domain Domain of the data type to be privatized.
 #' @param input_metric Metric of the data type to be privatized.
 #' @param scale Noise scale parameter for the Laplace distribution. `scale` == standard_deviation / sqrt(2).
 #' @param k The noise granularity in terms of 2^k, only valid for domains over floats.
-#' @param .QO Data type of the output distance and scale. `f32` or `f64`.
 #' @return Measurement
 #' @export
 make_laplace <- function(
   input_domain,
   input_metric,
   scale,
-  k = NULL,
-  .QO = "float"
+  k = NULL
 ) {
   assert_features("contrib")
 
   # Standardize type arguments.
-  .QO <- rt_parse(type_name = .QO)
-  .T.scale <- get_atom(.QO)
   .T.k <- new_runtime_type(origin = "Option", args = list(i32))
 
   log <- new_constructor_log("make_laplace", "measurements", new_hashtab(
-    list("input_domain", "input_metric", "scale", "k", "QO"),
-    list(input_domain, input_metric, scale, k, .QO)
+    list("input_domain", "input_metric", "scale", "k"),
+    list(input_domain, input_metric, unbox2(scale), k)
   ))
 
   # Assert that arguments are correctly typed.
-  rt_assert_is_similar(expected = .T.scale, inferred = rt_infer(scale))
+  rt_assert_is_similar(expected = f64, inferred = rt_infer(scale))
   rt_assert_is_similar(expected = .T.k, inferred = rt_infer(k))
 
   # Call wrapper function.
   output <- .Call(
     "measurements__make_laplace",
-    input_domain, input_metric, scale, k, .QO, rt_parse(.T.scale), rt_parse(.T.k),
+    input_domain, input_metric, scale, k, rt_parse(.T.k),
     log, PACKAGE = "opendp")
   output
 }
@@ -429,19 +417,17 @@ make_laplace <- function(
 #' @param lhs The prior transformation or metric space.
 #' @param scale Noise scale parameter for the Laplace distribution. `scale` == standard_deviation / sqrt(2).
 #' @param k The noise granularity in terms of 2^k, only valid for domains over floats.
-#' @param .QO Data type of the output distance and scale. `f32` or `f64`.
 #' @return Measurement
 #' @export
 then_laplace <- function(
   lhs,
   scale,
-  k = NULL,
-  .QO = "float"
+  k = NULL
 ) {
 
   log <- new_constructor_log("then_laplace", "measurements", new_hashtab(
-    list("scale", "k", "QO"),
-    list(scale, k, .QO)
+    list("scale", "k"),
+    list(unbox2(scale), k)
   ))
 
   make_chain_dyn(
@@ -449,8 +435,7 @@ then_laplace <- function(
       output_domain(lhs),
       output_metric(lhs),
       scale = scale,
-      k = k,
-      .QO = .QO),
+      k = k),
     lhs,
     log)
 }
@@ -471,7 +456,7 @@ then_laplace <- function(
 #' * Input Domain:   `MapDomain<AtomDomain<TK>, AtomDomain<TV>>`
 #' * Output Type:    `HashMap<TK, TV>`
 #' * Input Metric:   `L1Distance<TV>`
-#' * Output Measure: `FixedSmoothedMaxDivergence<TV>`
+#' * Output Measure: `Approximate<MaxDivergence>`
 #'
 #' @concept measurements
 #' @param input_domain Domain of the input.
@@ -495,11 +480,11 @@ make_laplace_threshold <- function(
 
   log <- new_constructor_log("make_laplace_threshold", "measurements", new_hashtab(
     list("input_domain", "input_metric", "scale", "threshold", "k"),
-    list(input_domain, input_metric, scale, threshold, unbox2(k))
+    list(input_domain, input_metric, unbox2(scale), threshold, unbox2(k))
   ))
 
   # Assert that arguments are correctly typed.
-  rt_assert_is_similar(expected = .TV, inferred = rt_infer(scale))
+  rt_assert_is_similar(expected = f64, inferred = rt_infer(scale))
   rt_assert_is_similar(expected = .TV, inferred = rt_infer(threshold))
   rt_assert_is_similar(expected = i32, inferred = rt_infer(k))
 
@@ -531,7 +516,7 @@ then_laplace_threshold <- function(
 
   log <- new_constructor_log("then_laplace_threshold", "measurements", new_hashtab(
     list("scale", "threshold", "k"),
-    list(scale, threshold, unbox2(k))
+    list(unbox2(scale), threshold, unbox2(k))
   ))
 
   make_chain_dyn(
@@ -557,44 +542,41 @@ then_laplace_threshold <- function(
 #' * Input Domain:   `AtomDomain<T>`
 #' * Output Type:    `T`
 #' * Input Metric:   `DiscreteDistance`
-#' * Output Measure: `MaxDivergence<QO>`
+#' * Output Measure: `MaxDivergence`
 #'
 #' @concept measurements
 #' @param categories Set of valid outcomes
 #' @param prob Probability of returning the correct answer. Must be in `[1/num_categories, 1)`
 #' @param constant_time Set to true to enable constant time. Slower.
 #' @param .T Data type of a category.
-#' @param .QO Data type of probability and output distance.
 #' @return Measurement
 #' @export
 make_randomized_response <- function(
   categories,
   prob,
   constant_time = FALSE,
-  .T = NULL,
-  .QO = NULL
+  .T = NULL
 ) {
   assert_features("contrib")
 
   # Standardize type arguments.
   .T <- parse_or_infer(type_name = .T, public_example = get_first(categories))
-  .QO <- parse_or_infer(type_name = .QO, public_example = prob)
   .T.categories <- new_runtime_type(origin = "Vec", args = list(.T))
 
   log <- new_constructor_log("make_randomized_response", "measurements", new_hashtab(
-    list("categories", "prob", "constant_time", "T", "QO"),
-    list(categories, prob, unbox2(constant_time), .T, .QO)
+    list("categories", "prob", "constant_time", "T"),
+    list(categories, unbox2(prob), unbox2(constant_time), .T)
   ))
 
   # Assert that arguments are correctly typed.
   rt_assert_is_similar(expected = .T.categories, inferred = rt_infer(categories))
-  rt_assert_is_similar(expected = .QO, inferred = rt_infer(prob))
+  rt_assert_is_similar(expected = f64, inferred = rt_infer(prob))
   rt_assert_is_similar(expected = bool, inferred = rt_infer(constant_time))
 
   # Call wrapper function.
   output <- .Call(
     "measurements__make_randomized_response",
-    categories, prob, constant_time, .T, .QO, rt_parse(.T.categories),
+    categories, prob, constant_time, .T, rt_parse(.T.categories),
     log, PACKAGE = "opendp")
   output
 }
@@ -609,7 +591,6 @@ make_randomized_response <- function(
 #' @param prob Probability of returning the correct answer. Must be in `[1/num_categories, 1)`
 #' @param constant_time Set to true to enable constant time. Slower.
 #' @param .T Data type of a category.
-#' @param .QO Data type of probability and output distance.
 #' @return Measurement
 #' @export
 then_randomized_response <- function(
@@ -617,13 +598,12 @@ then_randomized_response <- function(
   categories,
   prob,
   constant_time = FALSE,
-  .T = NULL,
-  .QO = NULL
+  .T = NULL
 ) {
 
   log <- new_constructor_log("then_randomized_response", "measurements", new_hashtab(
-    list("categories", "prob", "constant_time", "T", "QO"),
-    list(categories, prob, unbox2(constant_time), .T, .QO)
+    list("categories", "prob", "constant_time", "T"),
+    list(categories, unbox2(prob), unbox2(constant_time), .T)
   ))
 
   make_chain_dyn(
@@ -631,8 +611,7 @@ then_randomized_response <- function(
       categories = categories,
       prob = prob,
       constant_time = constant_time,
-      .T = .T,
-      .QO = .QO),
+      .T = .T),
     lhs,
     log)
 }
@@ -649,7 +628,7 @@ then_randomized_response <- function(
 #' * Input Domain:   `AtomDomain<bool>`
 #' * Output Type:    `bool`
 #' * Input Metric:   `DiscreteDistance`
-#' * Output Measure: `MaxDivergence<QO>`
+#' * Output Measure: `MaxDivergence`
 #'
 #' **Proof Definition:**
 #'
@@ -658,32 +637,28 @@ then_randomized_response <- function(
 #' @concept measurements
 #' @param prob Probability of returning the correct answer. Must be in `[0.5, 1)`
 #' @param constant_time Set to true to enable constant time. Slower.
-#' @param .QO Data type of probability and output distance.
 #' @return Measurement
 #' @export
 make_randomized_response_bool <- function(
   prob,
-  constant_time = FALSE,
-  .QO = NULL
+  constant_time = FALSE
 ) {
   assert_features("contrib")
 
-  # Standardize type arguments.
-  .QO <- parse_or_infer(type_name = .QO, public_example = prob)
-
+  # No type arguments to standardize.
   log <- new_constructor_log("make_randomized_response_bool", "measurements", new_hashtab(
-    list("prob", "constant_time", "QO"),
-    list(prob, unbox2(constant_time), .QO)
+    list("prob", "constant_time"),
+    list(unbox2(prob), unbox2(constant_time))
   ))
 
   # Assert that arguments are correctly typed.
-  rt_assert_is_similar(expected = .QO, inferred = rt_infer(prob))
+  rt_assert_is_similar(expected = f64, inferred = rt_infer(prob))
   rt_assert_is_similar(expected = bool, inferred = rt_infer(constant_time))
 
   # Call wrapper function.
   output <- .Call(
     "measurements__make_randomized_response_bool",
-    prob, constant_time, .QO,
+    prob, constant_time,
     log, PACKAGE = "opendp")
   output
 }
@@ -696,26 +671,23 @@ make_randomized_response_bool <- function(
 #' @param lhs The prior transformation or metric space.
 #' @param prob Probability of returning the correct answer. Must be in `[0.5, 1)`
 #' @param constant_time Set to true to enable constant time. Slower.
-#' @param .QO Data type of probability and output distance.
 #' @return Measurement
 #' @export
 then_randomized_response_bool <- function(
   lhs,
   prob,
-  constant_time = FALSE,
-  .QO = NULL
+  constant_time = FALSE
 ) {
 
   log <- new_constructor_log("then_randomized_response_bool", "measurements", new_hashtab(
-    list("prob", "constant_time", "QO"),
-    list(prob, unbox2(constant_time), .QO)
+    list("prob", "constant_time"),
+    list(unbox2(prob), unbox2(constant_time))
   ))
 
   make_chain_dyn(
     make_randomized_response_bool(
       prob = prob,
-      constant_time = constant_time,
-      .QO = .QO),
+      constant_time = constant_time),
     lhs,
     log)
 }
@@ -732,7 +704,7 @@ then_randomized_response_bool <- function(
 #' * Input Domain:   `VectorDomain<AtomDomain<TIA>>`
 #' * Output Type:    `usize`
 #' * Input Metric:   `LInfDistance<TIA>`
-#' * Output Measure: `MaxDivergence<QO>`
+#' * Output Measure: `MaxDivergence`
 #'
 #' **Proof Definition:**
 #'
@@ -742,35 +714,31 @@ then_randomized_response_bool <- function(
 #' @param input_domain Domain of the input vector. Must be a non-nullable VectorDomain.
 #' @param input_metric Metric on the input domain. Must be LInfDistance
 #' @param scale Higher scales are more private.
-#' @param optimize Indicate whether to privately return the "Max" or "Min"
-#' @param .QO Output Distance Type.
+#' @param optimize Indicate whether to privately return the "max" or "min"
 #' @return Measurement
 #' @export
 make_report_noisy_max_gumbel <- function(
   input_domain,
   input_metric,
   scale,
-  optimize,
-  .QO = NULL
+  optimize
 ) {
   assert_features("contrib")
 
-  # Standardize type arguments.
-  .QO <- parse_or_infer(type_name = .QO, public_example = scale)
-
+  # No type arguments to standardize.
   log <- new_constructor_log("make_report_noisy_max_gumbel", "measurements", new_hashtab(
-    list("input_domain", "input_metric", "scale", "optimize", "QO"),
-    list(input_domain, input_metric, scale, unbox2(optimize), .QO)
+    list("input_domain", "input_metric", "scale", "optimize"),
+    list(input_domain, input_metric, unbox2(scale), unbox2(optimize))
   ))
 
   # Assert that arguments are correctly typed.
-  rt_assert_is_similar(expected = .QO, inferred = rt_infer(scale))
+  rt_assert_is_similar(expected = f64, inferred = rt_infer(scale))
   rt_assert_is_similar(expected = String, inferred = rt_infer(optimize))
 
   # Call wrapper function.
   output <- .Call(
     "measurements__make_report_noisy_max_gumbel",
-    input_domain, input_metric, scale, optimize, .QO,
+    input_domain, input_metric, scale, optimize,
     log, PACKAGE = "opendp")
   output
 }
@@ -782,20 +750,18 @@ make_report_noisy_max_gumbel <- function(
 #' @concept measurements
 #' @param lhs The prior transformation or metric space.
 #' @param scale Higher scales are more private.
-#' @param optimize Indicate whether to privately return the "Max" or "Min"
-#' @param .QO Output Distance Type.
+#' @param optimize Indicate whether to privately return the "max" or "min"
 #' @return Measurement
 #' @export
 then_report_noisy_max_gumbel <- function(
   lhs,
   scale,
-  optimize,
-  .QO = NULL
+  optimize
 ) {
 
   log <- new_constructor_log("then_report_noisy_max_gumbel", "measurements", new_hashtab(
-    list("scale", "optimize", "QO"),
-    list(scale, unbox2(optimize), .QO)
+    list("scale", "optimize"),
+    list(unbox2(scale), unbox2(optimize))
   ))
 
   make_chain_dyn(
@@ -803,8 +769,7 @@ then_report_noisy_max_gumbel <- function(
       output_domain(lhs),
       output_metric(lhs),
       scale = scale,
-      optimize = optimize,
-      .QO = .QO),
+      optimize = optimize),
     lhs,
     log)
 }

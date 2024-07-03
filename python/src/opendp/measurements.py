@@ -74,7 +74,7 @@ def make_alp_queryable(
     * Input Domain:   `MapDomain<AtomDomain<K>, AtomDomain<CI>>`
     * Output Type:    `Queryable<K, CO>`
     * Input Metric:   `L1Distance<CI>`
-    * Output Measure: `MaxDivergence<CO>`
+    * Output Measure: `MaxDivergence`
 
     :param input_domain: 
     :type input_domain: Domain
@@ -153,9 +153,9 @@ def then_alp_queryable(
 def make_gaussian(
     input_domain: Domain,
     input_metric: Metric,
-    scale,
+    scale: float,
     k = None,
-    MO: RuntimeTypeDescriptor = "ZeroConcentratedDivergence<QO>"
+    MO: RuntimeTypeDescriptor = "ZeroConcentratedDivergence"
 ) -> Measurement:
     r"""Make a Measurement that adds noise from the Gaussian(`scale`) distribution to the input.
 
@@ -180,8 +180,9 @@ def make_gaussian(
     :param input_metric: Metric of the data type to be privatized.
     :type input_metric: Metric
     :param scale: Noise scale parameter for the gaussian distribution. `scale` == standard_deviation.
+    :type scale: float
     :param k: The noise granularity in terms of 2^k.
-    :param MO: Output Measure. The only valid measure is `ZeroConcentratedDivergence<T>`.
+    :param MO: Output Measure. The only valid measure is `ZeroConcentratedDivergence`.
     :type MO: :py:ref:`RuntimeTypeDescriptor`
     :rtype: Measurement
     :raises TypeError: if an argument's type differs from the expected type
@@ -206,20 +207,18 @@ def make_gaussian(
     assert_features("contrib")
 
     # Standardize type arguments.
-    MO = RuntimeType.parse(type_name=MO, generics=["QO"])
-    QO = get_atom_or_infer(MO, scale) # type: ignore
-    MO = MO.substitute(QO=QO) # type: ignore
+    MO = RuntimeType.parse(type_name=MO)
 
     # Convert arguments to c types.
     c_input_domain = py_to_c(input_domain, c_type=Domain, type_name=None)
     c_input_metric = py_to_c(input_metric, c_type=Metric, type_name=None)
-    c_scale = py_to_c(scale, c_type=ctypes.c_void_p, type_name=QO)
+    c_scale = py_to_c(scale, c_type=ctypes.c_double, type_name=f64)
     c_k = py_to_c(k, c_type=ctypes.c_void_p, type_name=RuntimeType(origin='Option', args=[i32]))
     c_MO = py_to_c(MO, c_type=ctypes.c_char_p)
 
     # Call library function.
     lib_function = lib.opendp_measurements__make_gaussian
-    lib_function.argtypes = [Domain, Metric, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_char_p]
+    lib_function.argtypes = [Domain, Metric, ctypes.c_double, ctypes.c_void_p, ctypes.c_char_p]
     lib_function.restype = FfiResult
 
     output = c_to_py(unwrap(lib_function(c_input_domain, c_input_metric, c_scale, c_k, c_MO), Measurement))
@@ -227,9 +226,9 @@ def make_gaussian(
     return output
 
 def then_gaussian(
-    scale,
+    scale: float,
     k = None,
-    MO: RuntimeTypeDescriptor = "ZeroConcentratedDivergence<QO>"
+    MO: RuntimeTypeDescriptor = "ZeroConcentratedDivergence"
 ):  
     r"""partial constructor of make_gaussian
 
@@ -237,8 +236,9 @@ def then_gaussian(
       Delays application of `input_domain` and `input_metric` in :py:func:`opendp.measurements.make_gaussian`
 
     :param scale: Noise scale parameter for the gaussian distribution. `scale` == standard_deviation.
+    :type scale: float
     :param k: The noise granularity in terms of 2^k.
-    :param MO: Output Measure. The only valid measure is `ZeroConcentratedDivergence<T>`.
+    :param MO: Output Measure. The only valid measure is `ZeroConcentratedDivergence`.
     :type MO: :py:ref:`RuntimeTypeDescriptor`
 
     :example:
@@ -268,9 +268,8 @@ def then_gaussian(
 def make_geometric(
     input_domain: Domain,
     input_metric: Metric,
-    scale,
-    bounds = None,
-    QO: Optional[RuntimeTypeDescriptor] = None
+    scale: float,
+    bounds = None
 ) -> Measurement:
     r"""Equivalent to `make_laplace` but restricted to an integer support.
     Can specify `bounds` to run the algorithm in near constant-time.
@@ -286,16 +285,15 @@ def make_geometric(
     * Input Domain:   `D`
     * Output Type:    `D::Carrier`
     * Input Metric:   `D::InputMetric`
-    * Output Measure: `MaxDivergence<QO>`
+    * Output Measure: `MaxDivergence`
 
     :param input_domain: 
     :type input_domain: Domain
     :param input_metric: 
     :type input_metric: Metric
     :param scale: 
+    :type scale: float
     :param bounds: 
-    :param QO: 
-    :type QO: :py:ref:`RuntimeTypeDescriptor`
     :rtype: Measurement
     :raises TypeError: if an argument's type differs from the expected type
     :raises UnknownTypeException: if a type argument fails to parse
@@ -319,30 +317,27 @@ def make_geometric(
     assert_features("contrib")
 
     # Standardize type arguments.
-    QO = RuntimeType.parse_or_infer(type_name=QO, public_example=scale)
     T = get_atom(get_carrier_type(input_domain)) # type: ignore
     OptionT = RuntimeType(origin='Option', args=[RuntimeType(origin='Tuple', args=[T, T])]) # type: ignore
 
     # Convert arguments to c types.
     c_input_domain = py_to_c(input_domain, c_type=Domain, type_name=None)
     c_input_metric = py_to_c(input_metric, c_type=Metric, type_name=None)
-    c_scale = py_to_c(scale, c_type=ctypes.c_void_p, type_name=QO)
+    c_scale = py_to_c(scale, c_type=ctypes.c_double, type_name=f64)
     c_bounds = py_to_c(bounds, c_type=AnyObjectPtr, type_name=OptionT)
-    c_QO = py_to_c(QO, c_type=ctypes.c_char_p)
 
     # Call library function.
     lib_function = lib.opendp_measurements__make_geometric
-    lib_function.argtypes = [Domain, Metric, ctypes.c_void_p, AnyObjectPtr, ctypes.c_char_p]
+    lib_function.argtypes = [Domain, Metric, ctypes.c_double, AnyObjectPtr]
     lib_function.restype = FfiResult
 
-    output = c_to_py(unwrap(lib_function(c_input_domain, c_input_metric, c_scale, c_bounds, c_QO), Measurement))
+    output = c_to_py(unwrap(lib_function(c_input_domain, c_input_metric, c_scale, c_bounds), Measurement))
 
     return output
 
 def then_geometric(
-    scale,
-    bounds = None,
-    QO: Optional[RuntimeTypeDescriptor] = None
+    scale: float,
+    bounds = None
 ):  
     r"""partial constructor of make_geometric
 
@@ -350,9 +345,8 @@ def then_geometric(
       Delays application of `input_domain` and `input_metric` in :py:func:`opendp.measurements.make_geometric`
 
     :param scale: 
+    :type scale: float
     :param bounds: 
-    :param QO: 
-    :type QO: :py:ref:`RuntimeTypeDescriptor`
 
     :example:
 
@@ -373,17 +367,15 @@ def then_geometric(
         input_domain=input_domain,
         input_metric=input_metric,
         scale=scale,
-        bounds=bounds,
-        QO=QO))
+        bounds=bounds))
 
 
 
 def make_laplace(
     input_domain: Domain,
     input_metric: Metric,
-    scale,
-    k = None,
-    QO: RuntimeTypeDescriptor = "float"
+    scale: float,
+    k = None
 ) -> Measurement:
     r"""Make a Measurement that adds noise from the Laplace(`scale`) distribution to the input.
 
@@ -408,16 +400,15 @@ def make_laplace(
     * Input Domain:   `D`
     * Output Type:    `D::Carrier`
     * Input Metric:   `D::InputMetric`
-    * Output Measure: `MaxDivergence<QO>`
+    * Output Measure: `MaxDivergence`
 
     :param input_domain: Domain of the data type to be privatized.
     :type input_domain: Domain
     :param input_metric: Metric of the data type to be privatized.
     :type input_metric: Metric
     :param scale: Noise scale parameter for the Laplace distribution. `scale` == standard_deviation / sqrt(2).
+    :type scale: float
     :param k: The noise granularity in terms of 2^k, only valid for domains over floats.
-    :param QO: Data type of the output distance and scale. `f32` or `f64`.
-    :type QO: :py:ref:`RuntimeTypeDescriptor`
     :rtype: Measurement
     :raises TypeError: if an argument's type differs from the expected type
     :raises UnknownTypeException: if a type argument fails to parse
@@ -441,29 +432,25 @@ def make_laplace(
     """
     assert_features("contrib")
 
-    # Standardize type arguments.
-    QO = RuntimeType.parse(type_name=QO)
-
+    # No type arguments to standardize.
     # Convert arguments to c types.
     c_input_domain = py_to_c(input_domain, c_type=Domain, type_name=None)
     c_input_metric = py_to_c(input_metric, c_type=Metric, type_name=None)
-    c_scale = py_to_c(scale, c_type=ctypes.c_void_p, type_name=get_atom(QO))
+    c_scale = py_to_c(scale, c_type=ctypes.c_double, type_name=f64)
     c_k = py_to_c(k, c_type=ctypes.c_void_p, type_name=RuntimeType(origin='Option', args=[i32]))
-    c_QO = py_to_c(QO, c_type=ctypes.c_char_p)
 
     # Call library function.
     lib_function = lib.opendp_measurements__make_laplace
-    lib_function.argtypes = [Domain, Metric, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_char_p]
+    lib_function.argtypes = [Domain, Metric, ctypes.c_double, ctypes.c_void_p]
     lib_function.restype = FfiResult
 
-    output = c_to_py(unwrap(lib_function(c_input_domain, c_input_metric, c_scale, c_k, c_QO), Measurement))
+    output = c_to_py(unwrap(lib_function(c_input_domain, c_input_metric, c_scale, c_k), Measurement))
 
     return output
 
 def then_laplace(
-    scale,
-    k = None,
-    QO: RuntimeTypeDescriptor = "float"
+    scale: float,
+    k = None
 ):  
     r"""partial constructor of make_laplace
 
@@ -471,9 +458,8 @@ def then_laplace(
       Delays application of `input_domain` and `input_metric` in :py:func:`opendp.measurements.make_laplace`
 
     :param scale: Noise scale parameter for the Laplace distribution. `scale` == standard_deviation / sqrt(2).
+    :type scale: float
     :param k: The noise granularity in terms of 2^k, only valid for domains over floats.
-    :param QO: Data type of the output distance and scale. `f32` or `f64`.
-    :type QO: :py:ref:`RuntimeTypeDescriptor`
 
     :example:
 
@@ -495,15 +481,14 @@ def then_laplace(
         input_domain=input_domain,
         input_metric=input_metric,
         scale=scale,
-        k=k,
-        QO=QO))
+        k=k))
 
 
 
 def make_laplace_threshold(
     input_domain: Domain,
     input_metric: Metric,
-    scale,
+    scale: float,
     threshold,
     k: int = -1074
 ) -> Measurement:
@@ -520,13 +505,14 @@ def make_laplace_threshold(
     * Input Domain:   `MapDomain<AtomDomain<TK>, AtomDomain<TV>>`
     * Output Type:    `HashMap<TK, TV>`
     * Input Metric:   `L1Distance<TV>`
-    * Output Measure: `FixedSmoothedMaxDivergence<TV>`
+    * Output Measure: `Approximate<MaxDivergence>`
 
     :param input_domain: Domain of the input.
     :type input_domain: Domain
     :param input_metric: Metric for the input domain.
     :type input_metric: Metric
     :param scale: Noise scale parameter for the laplace distribution. `scale` == standard_deviation / sqrt(2).
+    :type scale: float
     :param threshold: Exclude counts that are less than this minimum value.
     :param k: The noise granularity in terms of 2^k.
     :type k: int
@@ -543,13 +529,13 @@ def make_laplace_threshold(
     # Convert arguments to c types.
     c_input_domain = py_to_c(input_domain, c_type=Domain, type_name=None)
     c_input_metric = py_to_c(input_metric, c_type=Metric, type_name=None)
-    c_scale = py_to_c(scale, c_type=ctypes.c_void_p, type_name=TV)
+    c_scale = py_to_c(scale, c_type=ctypes.c_double, type_name=f64)
     c_threshold = py_to_c(threshold, c_type=ctypes.c_void_p, type_name=TV)
     c_k = py_to_c(k, c_type=ctypes.c_uint32, type_name=i32)
 
     # Call library function.
     lib_function = lib.opendp_measurements__make_laplace_threshold
-    lib_function.argtypes = [Domain, Metric, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32]
+    lib_function.argtypes = [Domain, Metric, ctypes.c_double, ctypes.c_void_p, ctypes.c_uint32]
     lib_function.restype = FfiResult
 
     output = c_to_py(unwrap(lib_function(c_input_domain, c_input_metric, c_scale, c_threshold, c_k), Measurement))
@@ -557,7 +543,7 @@ def make_laplace_threshold(
     return output
 
 def then_laplace_threshold(
-    scale,
+    scale: float,
     threshold,
     k: int = -1074
 ):  
@@ -567,6 +553,7 @@ def then_laplace_threshold(
       Delays application of `input_domain` and `input_metric` in :py:func:`opendp.measurements.make_laplace_threshold`
 
     :param scale: Noise scale parameter for the laplace distribution. `scale` == standard_deviation / sqrt(2).
+    :type scale: float
     :param threshold: Exclude counts that are less than this minimum value.
     :param k: The noise granularity in terms of 2^k.
     :type k: int
@@ -727,7 +714,7 @@ def make_private_lazyframe(
     >>> dp_sum_pets_by_grade = dp.m.make_private_lazyframe(
     ...     input_domain=lf_domain_with_margin,
     ...     input_metric=dp.symmetric_distance(),
-    ...     output_measure=dp.max_divergence(T=float),
+    ...     output_measure=dp.max_divergence(),
     ...     lazyframe=plan,
     ...     global_scale=1.0)
 
@@ -831,7 +818,7 @@ def then_private_lazyframe(
     >>> dp_sum_pets_by_grade = dp.m.make_private_lazyframe(
     ...     input_domain=lf_domain_with_margin,
     ...     input_metric=dp.symmetric_distance(),
-    ...     output_measure=dp.max_divergence(T=float),
+    ...     output_measure=dp.max_divergence(),
     ...     lazyframe=plan,
     ...     global_scale=1.0)
 
@@ -877,10 +864,9 @@ def then_private_lazyframe(
 
 def make_randomized_response(
     categories,
-    prob,
+    prob: float,
     constant_time: bool = False,
-    T: Optional[RuntimeTypeDescriptor] = None,
-    QO: Optional[RuntimeTypeDescriptor] = None
+    T: Optional[RuntimeTypeDescriptor] = None
 ) -> Measurement:
     r"""Make a Measurement that implements randomized response on a categorical value.
 
@@ -891,16 +877,15 @@ def make_randomized_response(
     * Input Domain:   `AtomDomain<T>`
     * Output Type:    `T`
     * Input Metric:   `DiscreteDistance`
-    * Output Measure: `MaxDivergence<QO>`
+    * Output Measure: `MaxDivergence`
 
     :param categories: Set of valid outcomes
     :param prob: Probability of returning the correct answer. Must be in `[1/num_categories, 1)`
+    :type prob: float
     :param constant_time: Set to true to enable constant time. Slower.
     :type constant_time: bool
     :param T: Data type of a category.
     :type T: :py:ref:`RuntimeTypeDescriptor`
-    :param QO: Data type of probability and output distance.
-    :type QO: :py:ref:`RuntimeTypeDescriptor`
     :rtype: Measurement
     :raises TypeError: if an argument's type differs from the expected type
     :raises UnknownTypeException: if a type argument fails to parse
@@ -918,29 +903,26 @@ def make_randomized_response(
 
     # Standardize type arguments.
     T = RuntimeType.parse_or_infer(type_name=T, public_example=get_first(categories))
-    QO = RuntimeType.parse_or_infer(type_name=QO, public_example=prob)
 
     # Convert arguments to c types.
     c_categories = py_to_c(categories, c_type=AnyObjectPtr, type_name=RuntimeType(origin='Vec', args=[T]))
-    c_prob = py_to_c(prob, c_type=ctypes.c_void_p, type_name=QO)
+    c_prob = py_to_c(prob, c_type=ctypes.c_double, type_name=f64)
     c_constant_time = py_to_c(constant_time, c_type=ctypes.c_bool, type_name=bool)
     c_T = py_to_c(T, c_type=ctypes.c_char_p)
-    c_QO = py_to_c(QO, c_type=ctypes.c_char_p)
 
     # Call library function.
     lib_function = lib.opendp_measurements__make_randomized_response
-    lib_function.argtypes = [AnyObjectPtr, ctypes.c_void_p, ctypes.c_bool, ctypes.c_char_p, ctypes.c_char_p]
+    lib_function.argtypes = [AnyObjectPtr, ctypes.c_double, ctypes.c_bool, ctypes.c_char_p]
     lib_function.restype = FfiResult
 
-    output = c_to_py(unwrap(lib_function(c_categories, c_prob, c_constant_time, c_T, c_QO), Measurement))
+    output = c_to_py(unwrap(lib_function(c_categories, c_prob, c_constant_time, c_T), Measurement))
 
     return output
 
 
 def make_randomized_response_bool(
-    prob,
-    constant_time: bool = False,
-    QO: Optional[RuntimeTypeDescriptor] = None
+    prob: float,
+    constant_time: bool = False
 ) -> Measurement:
     r"""Make a Measurement that implements randomized response on a boolean value.
 
@@ -951,17 +933,16 @@ def make_randomized_response_bool(
     * Input Domain:   `AtomDomain<bool>`
     * Output Type:    `bool`
     * Input Metric:   `DiscreteDistance`
-    * Output Measure: `MaxDivergence<QO>`
+    * Output Measure: `MaxDivergence`
 
     **Proof Definition:**
 
     [(Proof Document)](https://docs.opendp.org/en/nightly/proofs/rust/src/measurements/randomized_response/make_randomized_response_bool.pdf)
 
     :param prob: Probability of returning the correct answer. Must be in `[0.5, 1)`
+    :type prob: float
     :param constant_time: Set to true to enable constant time. Slower.
     :type constant_time: bool
-    :param QO: Data type of probability and output distance.
-    :type QO: :py:ref:`RuntimeTypeDescriptor`
     :rtype: Measurement
     :raises TypeError: if an argument's type differs from the expected type
     :raises UnknownTypeException: if a type argument fails to parse
@@ -977,20 +958,17 @@ def make_randomized_response_bool(
     """
     assert_features("contrib")
 
-    # Standardize type arguments.
-    QO = RuntimeType.parse_or_infer(type_name=QO, public_example=prob)
-
+    # No type arguments to standardize.
     # Convert arguments to c types.
-    c_prob = py_to_c(prob, c_type=ctypes.c_void_p, type_name=QO)
+    c_prob = py_to_c(prob, c_type=ctypes.c_double, type_name=f64)
     c_constant_time = py_to_c(constant_time, c_type=ctypes.c_bool, type_name=bool)
-    c_QO = py_to_c(QO, c_type=ctypes.c_char_p)
 
     # Call library function.
     lib_function = lib.opendp_measurements__make_randomized_response_bool
-    lib_function.argtypes = [ctypes.c_void_p, ctypes.c_bool, ctypes.c_char_p]
+    lib_function.argtypes = [ctypes.c_double, ctypes.c_bool]
     lib_function.restype = FfiResult
 
-    output = c_to_py(unwrap(lib_function(c_prob, c_constant_time, c_QO), Measurement))
+    output = c_to_py(unwrap(lib_function(c_prob, c_constant_time), Measurement))
 
     return output
 
@@ -998,9 +976,8 @@ def make_randomized_response_bool(
 def make_report_noisy_max_gumbel(
     input_domain: Domain,
     input_metric: Metric,
-    scale,
-    optimize: str,
-    QO: Optional[RuntimeTypeDescriptor] = None
+    scale: float,
+    optimize: str
 ) -> Measurement:
     r"""Make a Measurement that takes a vector of scores and privately selects the index of the highest score.
 
@@ -1011,7 +988,7 @@ def make_report_noisy_max_gumbel(
     * Input Domain:   `VectorDomain<AtomDomain<TIA>>`
     * Output Type:    `usize`
     * Input Metric:   `LInfDistance<TIA>`
-    * Output Measure: `MaxDivergence<QO>`
+    * Output Measure: `MaxDivergence`
 
     **Proof Definition:**
 
@@ -1022,10 +999,9 @@ def make_report_noisy_max_gumbel(
     :param input_metric: Metric on the input domain. Must be LInfDistance
     :type input_metric: Metric
     :param scale: Higher scales are more private.
-    :param optimize: Indicate whether to privately return the "Max" or "Min"
+    :type scale: float
+    :param optimize: Indicate whether to privately return the "max" or "min"
     :type optimize: str
-    :param QO: Output Distance Type.
-    :type QO: :py:ref:`RuntimeTypeDescriptor`
     :rtype: Measurement
     :raises TypeError: if an argument's type differs from the expected type
     :raises UnknownTypeException: if a type argument fails to parse
@@ -1048,29 +1024,25 @@ def make_report_noisy_max_gumbel(
     """
     assert_features("contrib")
 
-    # Standardize type arguments.
-    QO = RuntimeType.parse_or_infer(type_name=QO, public_example=scale)
-
+    # No type arguments to standardize.
     # Convert arguments to c types.
     c_input_domain = py_to_c(input_domain, c_type=Domain, type_name=None)
     c_input_metric = py_to_c(input_metric, c_type=Metric, type_name=None)
-    c_scale = py_to_c(scale, c_type=AnyObjectPtr, type_name=QO)
+    c_scale = py_to_c(scale, c_type=ctypes.c_double, type_name=f64)
     c_optimize = py_to_c(optimize, c_type=ctypes.c_char_p, type_name=String)
-    c_QO = py_to_c(QO, c_type=ctypes.c_char_p)
 
     # Call library function.
     lib_function = lib.opendp_measurements__make_report_noisy_max_gumbel
-    lib_function.argtypes = [Domain, Metric, AnyObjectPtr, ctypes.c_char_p, ctypes.c_char_p]
+    lib_function.argtypes = [Domain, Metric, ctypes.c_double, ctypes.c_char_p]
     lib_function.restype = FfiResult
 
-    output = c_to_py(unwrap(lib_function(c_input_domain, c_input_metric, c_scale, c_optimize, c_QO), Measurement))
+    output = c_to_py(unwrap(lib_function(c_input_domain, c_input_metric, c_scale, c_optimize), Measurement))
 
     return output
 
 def then_report_noisy_max_gumbel(
-    scale,
-    optimize: str,
-    QO: Optional[RuntimeTypeDescriptor] = None
+    scale: float,
+    optimize: str
 ):  
     r"""partial constructor of make_report_noisy_max_gumbel
 
@@ -1078,10 +1050,9 @@ def then_report_noisy_max_gumbel(
       Delays application of `input_domain` and `input_metric` in :py:func:`opendp.measurements.make_report_noisy_max_gumbel`
 
     :param scale: Higher scales are more private.
-    :param optimize: Indicate whether to privately return the "Max" or "Min"
+    :type scale: float
+    :param optimize: Indicate whether to privately return the "max" or "min"
     :type optimize: str
-    :param QO: Output Distance Type.
-    :type QO: :py:ref:`RuntimeTypeDescriptor`
 
     :example:
 
@@ -1102,8 +1073,7 @@ def then_report_noisy_max_gumbel(
         input_domain=input_domain,
         input_metric=input_metric,
         scale=scale,
-        optimize=optimize,
-        QO=QO))
+        optimize=optimize))
 
 
 
@@ -1149,7 +1119,7 @@ def make_user_measurement(
     >>> space = dp.atom_domain(T=int), dp.absolute_distance(int)
     >>> user_measurement = dp.m.make_user_measurement(
     ...     *space,
-    ...     output_measure=dp.max_divergence(float),
+    ...     output_measure=dp.max_divergence(),
     ...     function=const_function,
     ...     privacy_map=privacy_map
     ... )
@@ -1209,7 +1179,7 @@ def then_user_measurement(
     >>> space = dp.atom_domain(T=int), dp.absolute_distance(int)
     >>> user_measurement = dp.m.make_user_measurement(
     ...     *space,
-    ...     output_measure=dp.max_divergence(float),
+    ...     output_measure=dp.max_divergence(),
     ...     function=const_function,
     ...     privacy_map=privacy_map
     ... )

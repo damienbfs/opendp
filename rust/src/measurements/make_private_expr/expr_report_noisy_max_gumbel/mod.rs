@@ -45,7 +45,7 @@ pub fn make_expr_report_noisy_max_gumbel<MI: 'static + Metric>(
     input_metric: MI,
     expr: Expr,
     global_scale: Option<f64>,
-) -> Fallible<Measurement<ExprDomain, Expr, MI, MaxDivergence<f64>>>
+) -> Fallible<Measurement<ExprDomain, Expr, MI, MaxDivergence>>
 where
     Expr: StableExpr<MI, Parallel<LInfDistance<f64>>>,
     (ExprDomain, MI): MetricSpace,

@@ -44,7 +44,7 @@ SEXP data__smd_curve_epsilon(
     PROTECT(log);
 
     AnyObject * c_curve = sexp_to_anyobjectptr(curve, R_NilValue);
-    AnyObject * c_delta = sexp_to_anyobjectptr(delta, T_delta);
+    double c_delta = Rf_asReal(delta);
 
     // Call library function.
     FfiResult_____AnyObject _result = opendp_data__smd_curve_epsilon(c_curve, c_delta);

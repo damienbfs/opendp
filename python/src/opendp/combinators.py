@@ -182,7 +182,7 @@ def make_chain_tt(
 
 def make_fix_delta(
     measurement: Measurement,
-    delta
+    delta: float
 ) -> Measurement:
     r"""Fix the delta parameter in the privacy map of a `measurement` with a SmoothedMaxDivergence output measure.
 
@@ -191,6 +191,7 @@ def make_fix_delta(
     :param measurement: a measurement with a privacy curve to be fixed
     :type measurement: Measurement
     :param delta: parameter to fix the privacy curve with
+    :type delta: float
     :rtype: Measurement
     :raises TypeError: if an argument's type differs from the expected type
     :raises UnknownTypeException: if a type argument fails to parse
@@ -201,11 +202,11 @@ def make_fix_delta(
     # No type arguments to standardize.
     # Convert arguments to c types.
     c_measurement = py_to_c(measurement, c_type=Measurement, type_name=None)
-    c_delta = py_to_c(delta, c_type=AnyObjectPtr, type_name=get_atom(measurement_output_distance_type(measurement)))
+    c_delta = py_to_c(delta, c_type=ctypes.c_double, type_name=f64)
 
     # Call library function.
     lib_function = lib.opendp_combinators__make_fix_delta
-    lib_function.argtypes = [Measurement, AnyObjectPtr]
+    lib_function.argtypes = [Measurement, ctypes.c_double]
     lib_function.restype = FfiResult
 
     output = c_to_py(unwrap(lib_function(c_measurement, c_delta), Measurement))
@@ -258,7 +259,7 @@ def make_pureDP_to_fixed_approxDP(
     measurement: Measurement
 ) -> Measurement:
     r"""Constructs a new output measurement where the output measure
-    is casted from `MaxDivergence<QO>` to `FixedSmoothedMaxDivergence<QO>`.
+    is casted from `MaxDivergence` to `FixedSmoothedMaxDivergence`.
 
     [make_pureDP_to_fixed_approxDP in Rust documentation.](https://docs.rs/opendp/latest/opendp/combinators/fn.make_pureDP_to_fixed_approxDP.html)
 
@@ -289,7 +290,7 @@ def make_pureDP_to_zCDP(
     measurement: Measurement
 ) -> Measurement:
     r"""Constructs a new output measurement where the output measure
-    is casted from `MaxDivergence<QO>` to `ZeroConcentratedDivergence<QO>`.
+    is casted from `MaxDivergence` to `ZeroConcentratedDivergence`.
 
     [make_pureDP_to_zCDP in Rust documentation.](https://docs.rs/opendp/latest/opendp/combinators/fn.make_pureDP_to_zCDP.html)
 
@@ -412,7 +413,7 @@ def make_zCDP_to_approxDP(
     measurement: Measurement
 ) -> Measurement:
     r"""Constructs a new output measurement where the output measure
-    is casted from `ZeroConcentratedDivergence<QO>` to `SmoothedMaxDivergence<QO>`.
+    is casted from `ZeroConcentratedDivergence` to `SmoothedMaxDivergence`.
 
     [make_zCDP_to_approxDP in Rust documentation.](https://docs.rs/opendp/latest/opendp/combinators/fn.make_zCDP_to_approxDP.html)
 

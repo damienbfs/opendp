@@ -372,12 +372,13 @@ def slice_free(
 
 def smd_curve_epsilon(
     curve,
-    delta
+    delta: float
 ):
     r"""Internal function. Use an SMDCurve to find epsilon at a given `delta`.
 
     :param curve: The SMDCurve.
     :param delta: What to fix delta to compute epsilon.
+    :type delta: float
     :return: Epsilon at a given `delta`.
     :raises TypeError: if an argument's type differs from the expected type
     :raises UnknownTypeException: if a type argument fails to parse
@@ -386,11 +387,11 @@ def smd_curve_epsilon(
     # No type arguments to standardize.
     # Convert arguments to c types.
     c_curve = py_to_c(curve, c_type=AnyObjectPtr, type_name=None)
-    c_delta = py_to_c(delta, c_type=AnyObjectPtr, type_name=get_atom(object_type(curve)))
+    c_delta = py_to_c(delta, c_type=ctypes.c_double, type_name=get_atom(object_type(curve)))
 
     # Call library function.
     lib_function = lib.opendp_data__smd_curve_epsilon
-    lib_function.argtypes = [AnyObjectPtr, AnyObjectPtr]
+    lib_function.argtypes = [AnyObjectPtr, ctypes.c_double]
     lib_function.restype = FfiResult
 
     output = c_to_py(unwrap(lib_function(c_curve, c_delta), AnyObjectPtr))

@@ -53,7 +53,7 @@ SEXP measurements__make_alp_queryable(
 
 
 SEXP measurements__make_gaussian(
-    SEXP input_domain, SEXP input_metric, SEXP scale, SEXP k, SEXP MO, SEXP QO, SEXP T_k, SEXP log
+    SEXP input_domain, SEXP input_metric, SEXP scale, SEXP k, SEXP MO, SEXP T_k, SEXP log
 ) {
     // Convert arguments to c types.
     PROTECT(input_domain);
@@ -61,20 +61,19 @@ SEXP measurements__make_gaussian(
     PROTECT(scale);
     PROTECT(k);
     PROTECT(MO);
-    PROTECT(QO);
     PROTECT(T_k);
     PROTECT(log);
 
     AnyDomain * c_input_domain = sexp_to_anydomainptr(input_domain);
     AnyMetric * c_input_metric = sexp_to_anymetricptr(input_metric);
-    void * c_scale = sexp_to_voidptr(scale, QO);
+    double c_scale = Rf_asReal(scale);
     void * c_k = sexp_to_voidptr(k, T_k);
     char * c_MO = rt_to_string(MO);
 
     // Call library function.
     FfiResult_____AnyMeasurement _result = opendp_measurements__make_gaussian(c_input_domain, c_input_metric, c_scale, c_k, c_MO);
 
-    UNPROTECT(8);
+    UNPROTECT(7);
     if(_result.tag == Err_____AnyMeasurement)
         return(extract_error(_result.err));
     AnyMeasurement* _return_value = _result.ok;
@@ -83,28 +82,26 @@ SEXP measurements__make_gaussian(
 
 
 SEXP measurements__make_geometric(
-    SEXP input_domain, SEXP input_metric, SEXP scale, SEXP bounds, SEXP QO, SEXP T, SEXP OptionT, SEXP log
+    SEXP input_domain, SEXP input_metric, SEXP scale, SEXP bounds, SEXP T, SEXP OptionT, SEXP log
 ) {
     // Convert arguments to c types.
     PROTECT(input_domain);
     PROTECT(input_metric);
     PROTECT(scale);
     PROTECT(bounds);
-    PROTECT(QO);
     PROTECT(T);
     PROTECT(OptionT);
     PROTECT(log);
 
     AnyDomain * c_input_domain = sexp_to_anydomainptr(input_domain);
     AnyMetric * c_input_metric = sexp_to_anymetricptr(input_metric);
-    void * c_scale = sexp_to_voidptr(scale, QO);
+    double c_scale = Rf_asReal(scale);
     AnyObject * c_bounds = sexp_to_anyobjectptr(bounds, OptionT);
-    char * c_QO = rt_to_string(QO);
 
     // Call library function.
-    FfiResult_____AnyMeasurement _result = opendp_measurements__make_geometric(c_input_domain, c_input_metric, c_scale, c_bounds, c_QO);
+    FfiResult_____AnyMeasurement _result = opendp_measurements__make_geometric(c_input_domain, c_input_metric, c_scale, c_bounds);
 
-    UNPROTECT(8);
+    UNPROTECT(7);
     if(_result.tag == Err_____AnyMeasurement)
         return(extract_error(_result.err));
     AnyMeasurement* _return_value = _result.ok;
@@ -113,28 +110,25 @@ SEXP measurements__make_geometric(
 
 
 SEXP measurements__make_laplace(
-    SEXP input_domain, SEXP input_metric, SEXP scale, SEXP k, SEXP QO, SEXP T_scale, SEXP T_k, SEXP log
+    SEXP input_domain, SEXP input_metric, SEXP scale, SEXP k, SEXP T_k, SEXP log
 ) {
     // Convert arguments to c types.
     PROTECT(input_domain);
     PROTECT(input_metric);
     PROTECT(scale);
     PROTECT(k);
-    PROTECT(QO);
-    PROTECT(T_scale);
     PROTECT(T_k);
     PROTECT(log);
 
     AnyDomain * c_input_domain = sexp_to_anydomainptr(input_domain);
     AnyMetric * c_input_metric = sexp_to_anymetricptr(input_metric);
-    void * c_scale = sexp_to_voidptr(scale, T_scale);
+    double c_scale = Rf_asReal(scale);
     void * c_k = sexp_to_voidptr(k, T_k);
-    char * c_QO = rt_to_string(QO);
 
     // Call library function.
-    FfiResult_____AnyMeasurement _result = opendp_measurements__make_laplace(c_input_domain, c_input_metric, c_scale, c_k, c_QO);
+    FfiResult_____AnyMeasurement _result = opendp_measurements__make_laplace(c_input_domain, c_input_metric, c_scale, c_k);
 
-    UNPROTECT(8);
+    UNPROTECT(6);
     if(_result.tag == Err_____AnyMeasurement)
         return(extract_error(_result.err));
     AnyMeasurement* _return_value = _result.ok;
@@ -156,7 +150,7 @@ SEXP measurements__make_laplace_threshold(
 
     AnyDomain * c_input_domain = sexp_to_anydomainptr(input_domain);
     AnyMetric * c_input_metric = sexp_to_anymetricptr(input_metric);
-    void * c_scale = sexp_to_voidptr(scale, TV);
+    double c_scale = Rf_asReal(scale);
     void * c_threshold = sexp_to_voidptr(threshold, TV);
     uint32_t c_k = (unsigned int)Rf_asInteger(k);
 
@@ -172,27 +166,25 @@ SEXP measurements__make_laplace_threshold(
 
 
 SEXP measurements__make_randomized_response(
-    SEXP categories, SEXP prob, SEXP constant_time, SEXP T, SEXP QO, SEXP T_categories, SEXP log
+    SEXP categories, SEXP prob, SEXP constant_time, SEXP T, SEXP T_categories, SEXP log
 ) {
     // Convert arguments to c types.
     PROTECT(categories);
     PROTECT(prob);
     PROTECT(constant_time);
     PROTECT(T);
-    PROTECT(QO);
     PROTECT(T_categories);
     PROTECT(log);
 
     AnyObject * c_categories = sexp_to_anyobjectptr(categories, T_categories);
-    void * c_prob = sexp_to_voidptr(prob, QO);
+    double c_prob = Rf_asReal(prob);
     bool c_constant_time = asLogical(constant_time);
     char * c_T = rt_to_string(T);
-    char * c_QO = rt_to_string(QO);
 
     // Call library function.
-    FfiResult_____AnyMeasurement _result = opendp_measurements__make_randomized_response(c_categories, c_prob, c_constant_time, c_T, c_QO);
+    FfiResult_____AnyMeasurement _result = opendp_measurements__make_randomized_response(c_categories, c_prob, c_constant_time, c_T);
 
-    UNPROTECT(7);
+    UNPROTECT(6);
     if(_result.tag == Err_____AnyMeasurement)
         return(extract_error(_result.err));
     AnyMeasurement* _return_value = _result.ok;
@@ -201,22 +193,20 @@ SEXP measurements__make_randomized_response(
 
 
 SEXP measurements__make_randomized_response_bool(
-    SEXP prob, SEXP constant_time, SEXP QO, SEXP log
+    SEXP prob, SEXP constant_time, SEXP log
 ) {
     // Convert arguments to c types.
     PROTECT(prob);
     PROTECT(constant_time);
-    PROTECT(QO);
     PROTECT(log);
 
-    void * c_prob = sexp_to_voidptr(prob, QO);
+    double c_prob = Rf_asReal(prob);
     bool c_constant_time = asLogical(constant_time);
-    char * c_QO = rt_to_string(QO);
 
     // Call library function.
-    FfiResult_____AnyMeasurement _result = opendp_measurements__make_randomized_response_bool(c_prob, c_constant_time, c_QO);
+    FfiResult_____AnyMeasurement _result = opendp_measurements__make_randomized_response_bool(c_prob, c_constant_time);
 
-    UNPROTECT(4);
+    UNPROTECT(3);
     if(_result.tag == Err_____AnyMeasurement)
         return(extract_error(_result.err));
     AnyMeasurement* _return_value = _result.ok;
@@ -225,26 +215,24 @@ SEXP measurements__make_randomized_response_bool(
 
 
 SEXP measurements__make_report_noisy_max_gumbel(
-    SEXP input_domain, SEXP input_metric, SEXP scale, SEXP optimize, SEXP QO, SEXP log
+    SEXP input_domain, SEXP input_metric, SEXP scale, SEXP optimize, SEXP log
 ) {
     // Convert arguments to c types.
     PROTECT(input_domain);
     PROTECT(input_metric);
     PROTECT(scale);
     PROTECT(optimize);
-    PROTECT(QO);
     PROTECT(log);
 
     AnyDomain * c_input_domain = sexp_to_anydomainptr(input_domain);
     AnyMetric * c_input_metric = sexp_to_anymetricptr(input_metric);
-    AnyObject * c_scale = sexp_to_anyobjectptr(scale, QO);
+    double c_scale = Rf_asReal(scale);
     char * c_optimize = (char *)CHAR(STRING_ELT(optimize, 0));
-    char * c_QO = rt_to_string(QO);
 
     // Call library function.
-    FfiResult_____AnyMeasurement _result = opendp_measurements__make_report_noisy_max_gumbel(c_input_domain, c_input_metric, c_scale, c_optimize, c_QO);
+    FfiResult_____AnyMeasurement _result = opendp_measurements__make_report_noisy_max_gumbel(c_input_domain, c_input_metric, c_scale, c_optimize);
 
-    UNPROTECT(6);
+    UNPROTECT(5);
     if(_result.tag == Err_____AnyMeasurement)
         return(extract_error(_result.err));
     AnyMeasurement* _return_value = _result.ok;
