@@ -129,6 +129,7 @@ def test_private_lazyframe_explicit_sum(measure):
 def test_private_lazyframe_sum(measure):
     pl = pytest.importorskip("polars")
     pl_testing = pytest.importorskip("polars.testing")
+    dp.enable_features("rust-stack-trace")
 
     lf_domain, lf = example_lf(
         margin=["B"], public_info="keys", max_partition_length=50
@@ -336,7 +337,7 @@ def test_polars_context():
         .with_columns(pl.col("B").is_null().alias("B_nulls"))
         .filter(pl.col("B_nulls"))
         .select(pl.col("A").fill_null(2.0).dp.sum((0, 3)))
-        .release()  # type: ignore[union-attr]
+        .release()
         .collect()
     )
 
@@ -344,7 +345,7 @@ def test_polars_context():
         context.query()
         .group_by("B")
         .agg(pl.len().dp.noise(), pl.col("A").fill_null(2).dp.sum((0, 3)))
-        .release()  # type: ignore[union-attr]
+        .release()
         .collect()
     )
 
@@ -380,12 +381,12 @@ def test_polars_describe():
         .agg(pl.len().dp.noise(), pl.col("A").fill_null(2).dp.sum((0, 3)))
     )
 
-    actual = query.accuracy()  # type: ignore[union-attr]
+    actual = query.accuracy()
     pl_testing.assert_frame_equal(expected, actual)
 
     accuracy = dp.discrete_laplacian_scale_to_accuracy(8.0, 0.05)
     expected = expected.with_columns(accuracy=accuracy)
-    actual = query.accuracy(alpha=0.05)  # type: ignore[union-attr]
+    actual = query.accuracy(alpha=0.05)
     pl_testing.assert_frame_equal(expected, actual)
 
 
@@ -420,7 +421,7 @@ def test_polars_accuracy_threshold():
         .agg(pl.len().dp.noise(), pl.col("A").fill_null(2).dp.sum((0, 3)))
     )
 
-    actual = query.accuracy()  # type: ignore[union-attr]
+    actual = query.accuracy()
     pl_testing.assert_frame_equal(expected, actual)
 
 
@@ -482,7 +483,7 @@ def test_polars_threshold():
         context.query()
         .group_by("A")
         .agg(pl.len().dp.noise())
-        .release()  # type: ignore[union-attr]
+        .release()
         .collect()
     )
 
@@ -490,6 +491,6 @@ def test_polars_threshold():
         context.query()
         .group_by("B")
         .agg(pl.len().dp.noise())
-        .release()  # type: ignore[union-attr]
+        .release()
         .collect()
     )
