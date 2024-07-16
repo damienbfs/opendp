@@ -17,7 +17,7 @@ use crate::{
 
 
 
-impl SMDCurve<f64> {
+impl SMDCurve {
     /// Find beta at a given `alpha`.
     pub fn beta(&self, alpha: f64) -> Fallible<f64> {
         find_best_supporting_beta(&self, alpha)
@@ -31,7 +31,7 @@ impl SMDCurve<f64> {
 
 
 fn profile_to_tradeoff(
-    curve: SMDCurve<f64>,
+    curve: SMDCurve,
     num_approximations: Option<u32>,
 ) -> Fallible<Function<f64, f64>> {
 
@@ -76,7 +76,7 @@ fn profile_to_tradeoff(
 /// # Arguments:
 /// * `curve` - Privacy curve
 /// * `alpha` - must be within [0, 1]
-fn find_best_supporting_beta(curve: &SMDCurve<f64>, alpha: f64) -> Fallible<f64> {
+fn find_best_supporting_beta(curve: &SMDCurve, alpha: f64) -> Fallible<f64> {
     // Ternary search for delta that maximizes beta in the interval [0, 1]
     // Could be improved with golden search algorithm or setting
     // delta_mid_left to (delta_right - delta_left)/2 - very_small_value
@@ -171,7 +171,14 @@ fn test_all() -> Fallible<()> {
         
         Ok((epsilon.exp() - delta).ln())
     };
-    let smd_curve = SMDCurve::new(move |&delta| pure_dp_privacy_profile(delta));
+    let pure_dp_privacy_profile_delta = move |epsilon: f64| {
+        if epsilon >= 1.0 {
+            return Ok(0.0);
+        }
+        
+        Ok(1.0f64.exp() - epsilon.exp())
+    };
+    let smd_curve = SMDCurve::new(move |&epsilon| pure_dp_privacy_profile_delta(epsilon));
     
     // Tradeoff
     let tradeoff_curve = profile_to_tradeoff(smd_curve, None).unwrap();
@@ -205,7 +212,6 @@ fn test_all() -> Fallible<()> {
     - what delta "precision" is enough, arbitrary choice, leave option to user?
 
     TODOs:
-    - arbitrary choice of "delta precision"
     - replace ternary search? seems relatively quick as-is.
     - tests
     - function names, etc..

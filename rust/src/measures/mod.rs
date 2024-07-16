@@ -113,7 +113,7 @@ impl<Q> Measure for SmoothedMaxDivergence<Q> {
 ///
 /// SMD stands for "Smoothed Max Divergence".
 /// This is the distance type for [`SmoothedMaxDivergence`].
-pub struct SMDCurve<Q>(Arc<dyn Fn(&Q) -> Fallible<Q> + Send + Sync>);
+pub struct SMDCurve<Q>(Arc<dyn Fn(&f64) -> Fallible<f64> + Send + Sync>);
 
 impl<Q> Clone for SMDCurve<Q> {
     fn clone(&self) -> Self {
@@ -122,13 +122,35 @@ impl<Q> Clone for SMDCurve<Q> {
 }
 
 impl<Q> SMDCurve<Q> {
-    pub fn new(epsilon: impl Fn(&Q) -> Fallible<Q> + 'static + Send + Sync) -> Self {
+    pub fn new(epsilon: impl Fn(&f64) -> Fallible<f64> + 'static + Send + Sync) -> Self {
         SMDCurve(Arc::new(epsilon))
     }
 
     // these functions allow direct invocation as a method, making parens unnecessary
-    pub fn epsilon(&self, delta: &Q) -> Fallible<Q> {
-        (self.0)(delta)
+    pub fn epsilon(&self, delta: &f64) -> Fallible<f64> {
+        // TODO binary search for corresponding epsilon.
+        let mut e_min: f64 = 0.0;
+        let mut e_max: f64 = f64::MAX; // TODO
+
+        loop {
+            let e_mid = e_min + (e_max - e_min / 2.0);
+    
+            if e_mid == e_max || e_mid == e_min {
+                return Ok(e_max);
+            }
+    
+            let d_mid = self.delta(&e_mid)?;
+            
+            if d_mid < *delta {
+                e_max = e_mid;
+            } else { // d_mid >= delta
+                e_min = e_mid;
+            }
+        }
+    }
+
+    pub fn delta(&self, epsilon: &f64) -> Fallible<f64> {
+        (self.0)(epsilon)
     }
 }
 

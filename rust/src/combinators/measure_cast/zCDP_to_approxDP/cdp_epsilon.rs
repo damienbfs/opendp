@@ -99,6 +99,92 @@ pub(crate) fn cdp_epsilon<Q: Float>(rho: Q, delta: Q) -> Fallible<Q> {
     Ok(epsilon.max(Q::zero()))
 }
 
+pub(crate) fn cdp_delta<Q>(rho: Q, eps: Q) -> Fallible<Q>
+where
+    Q: Float,
+{
+    if rho.is_sign_negative() {
+        return fallible!(FailedMap, "rho must be non-negative");
+    }
+
+    if eps.is_sign_negative() {
+        return fallible!(FailedMap, "epsilon must be non-negative");
+    }
+
+    if rho.is_zero() {
+        return Ok(Q::zero());
+    }
+
+    let _1 = Q::one();
+    let _2 = _1 + _1;
+
+    // It has been proven that...
+    //    delta = exp((α-1) (αρ - ε) + α ln1p(-1/α)) / (α-1)
+    // ...for any choice of alpha in (1, infty)
+
+    // This algorithm searches for the best alpha, the alpha that minimizes delta.
+
+    // Since any alpha in (1, infty) yields a valid upper bound on delta,
+    //    the search for alpha does not need conservative rounding.
+    // If this search is slightly "incorrect" by float rounding it will only result in larger delta (still valid)
+
+    // We now choose bounds for the binary search over alpha.
+
+    // The optimal alpha is no greater than (ε+1)/(2ρ)
+    let mut a_max = eps
+        .inf_add(&_1)?
+        .inf_div(&_2.neg_inf_mul(&rho)?)?
+        .inf_add(&_2)?;
+
+    // Don't let alpha be too small, due to numerical stability.
+    // We only encounter α <= 1.01 when eps <= rho or close to it.
+    // This is not an interesting parameter regime, as you will
+    //     inherently get large delta in this regime.
+    let mut a_min = Q::round_cast(1.01f64)?;
+
+    // run binary search to find ideal alpha
+    // Since the function is convex (when restricted to the bounds) 
+    //     the ideal alpha is the critical point of the derivative of the function for delta
+    loop {
+        let diff = a_max - a_min;
+
+        let a_mid = a_min + diff / _2;
+
+        if a_mid == a_max || a_mid == a_min {
+            break;
+        }
+
+        // calculate derivative
+        let deriv = (_2 * a_mid - _1) * rho - eps + a_mid.recip().neg().ln_1p();
+        //        = (2α - 1)            ρ   - ε   + ln1p(-1/α)
+
+        if deriv.is_sign_negative() {
+            a_min = a_mid;
+        } else {
+            a_max = a_mid;
+        }
+    }
+
+    // calculate delta
+    //  t1 = (α-1) (αρ - ε)
+    let t1 = a_max
+        .inf_sub(&_1)?
+        .inf_mul(&(a_max.inf_mul(&rho)?.inf_sub(&eps)?))?;
+
+    //  t2 = α ln1p(-1/α)
+    let t2 = a_max.inf_mul(&a_max.recip().neg().inf_ln_1p()?)?;
+
+    //  delta = exp((α-1) (αρ - ε) + α ln1p(-1/α)) / (α-1)
+    //        = exp(t1             + t2          ) / (α-1)
+    let delta = t1
+        .inf_add(&t2)?
+        .inf_exp()?
+        .inf_div(&(a_max.inf_sub(&_1)?))?;
+
+    // delta is always <= 1
+    Ok(delta.min(Q::one()))
+}
+
 #[cfg(test)]
 mod test {
 

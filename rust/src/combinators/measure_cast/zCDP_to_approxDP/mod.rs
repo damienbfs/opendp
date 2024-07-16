@@ -5,7 +5,7 @@ use crate::{
     traits::Float,
 };
 
-use self::cdp_epsilon::cdp_epsilon;
+use self::cdp_epsilon::cdp_delta;
 
 #[cfg(feature = "ffi")]
 mod ffi;
@@ -41,7 +41,7 @@ where
         PrivacyMap::new_fallible(move |d_in: &MI::Distance| {
             let rho = privacy_map.eval(d_in)?;
 
-            Ok(SMDCurve::new(move |&delta: &QO| cdp_epsilon(rho, delta)))
+            Ok(SMDCurve::new(move |&epsilon: &QO| cdp_delta(rho, epsilon)))
         }),
     )
 }

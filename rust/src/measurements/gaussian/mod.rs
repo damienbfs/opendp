@@ -5,7 +5,7 @@ use crate::{
     core::{Domain, Measure, Measurement, Metric, MetricSpace, PrivacyMap},
     domains::{AtomDomain, VectorDomain},
     error::Fallible,
-    measures::ZeroConcentratedDivergence,
+    measures::{SMDCurve, ZeroConcentratedDivergence},
     metrics::{AbsoluteDistance, L2Distance},
     traits::{cartesian, Float, InfCast, Number},
 };
@@ -59,6 +59,39 @@ where
 
         // (d_in / scale)^2 / 2
         (d_in.inf_div(&scale)?).inf_powi(2.into())?.inf_div(&_2)
+    }
+}
+
+pub(crate) fn gaussian_approxDP_map<QI, QO>(scale: QO, relaxation: QO) -> impl Fn(&QI) -> Fallible<SMDCurve<QO>> // TODO SMDCurve<QO> correct?
+where
+    QI: Clone,
+    QO: Float + InfCast<QI>,
+{
+    let _2 = QO::exact_int_cast(2).unwrap();
+    move |d_in: &QI| {
+        let d_in = QO::inf_cast(d_in.clone())?;
+
+        if d_in.is_sign_negative() {
+            return fallible!(InvalidDistance, "sensitivity must be non-negative");
+        }
+
+        // increase d_in by the relaxation
+        //   * if float, this will be the worst-case rounding of the discretization
+        //   * if integer, this will be zero
+        let d_in = d_in.inf_add(&relaxation)?;
+
+        if d_in.is_zero() {
+            return Ok(SMDCurve::new(|&_: &QO| Ok(QO::zero())));
+        }
+
+        if scale.is_zero() {
+            return Ok(SMDCurve::new(|&_: &QO| Ok(QO::one())));
+        }
+
+        unimplemented!()
+
+        // (d_in / scale)^2 / 2
+        // (d_in.inf_div(&scale)?).inf_powi(2.into())?.inf_div(&_2)
     }
 }
 
