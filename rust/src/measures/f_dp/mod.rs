@@ -16,6 +16,20 @@ use crate::{
 };
 
 
+
+impl SMDCurve<f64> {
+    /// Find beta at a given `alpha`.
+    pub fn beta(&self, alpha: f64) -> Fallible<f64> {
+        find_best_supporting_beta(&self, alpha)
+    }
+
+    /// Create an α(β) curve supported on num_approximations supporting functions.
+    pub fn tradeoff(&self, num_approximations: Option<u32>) -> Fallible<Function<f64, f64>> {
+        profile_to_tradeoff(self.clone(), num_approximations)
+    }
+}
+
+
 fn profile_to_tradeoff(
     curve: SMDCurve<f64>,
     num_approximations: Option<u32>,

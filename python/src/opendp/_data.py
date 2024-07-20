@@ -21,7 +21,9 @@ __all__ = [
     "onceframe_lazy",
     "slice_as_object",
     "slice_free",
+    "smd_curve_beta",
     "smd_curve_epsilon",
+    "smd_curve_tradeoff",
     "str_free"
 ]
 
@@ -370,6 +372,35 @@ def slice_free(
     return output
 
 
+def smd_curve_beta(
+    curve,
+    alpha: float
+):
+    r"""Internal function. Use an SMDCurve to find beta at a given `alpha`.
+
+    :param curve: The SMDCurve.
+    :param alpha: What to fix alpha to compute beta.
+    :type alpha: float
+    :return: Beta at a given `alpha`.
+    :raises TypeError: if an argument's type differs from the expected type
+    :raises UnknownTypeException: if a type argument fails to parse
+    :raises OpenDPException: packaged error from the core OpenDP library
+    """
+    # No type arguments to standardize.
+    # Convert arguments to c types.
+    c_curve = py_to_c(curve, c_type=AnyObjectPtr, type_name=None)
+    c_alpha = py_to_c(alpha, c_type=ctypes.c_double, type_name=f64)
+
+    # Call library function.
+    lib_function = lib.opendp_data__smd_curve_beta
+    lib_function.argtypes = [AnyObjectPtr, ctypes.c_double]
+    lib_function.restype = FfiResult
+
+    output = c_to_py(unwrap(lib_function(c_curve, c_alpha), AnyObjectPtr))
+
+    return output
+
+
 def smd_curve_epsilon(
     curve,
     delta
@@ -394,6 +425,35 @@ def smd_curve_epsilon(
     lib_function.restype = FfiResult
 
     output = c_to_py(unwrap(lib_function(c_curve, c_delta), AnyObjectPtr))
+
+    return output
+
+
+def smd_curve_tradeoff(
+    curve,
+    num_approximations
+) -> Function:
+    r"""Internal function. Use an SMDCurve to construct a piecewise linear supporting function.
+
+    :param curve: The SMDCurve.
+    :param num_approximations: Number of supporting functions to create.
+    :return: `α(β)` tradeoff function.
+    :rtype: Function
+    :raises TypeError: if an argument's type differs from the expected type
+    :raises UnknownTypeException: if a type argument fails to parse
+    :raises OpenDPException: packaged error from the core OpenDP library
+    """
+    # No type arguments to standardize.
+    # Convert arguments to c types.
+    c_curve = py_to_c(curve, c_type=AnyObjectPtr, type_name=None)
+    c_num_approximations = py_to_c(num_approximations, c_type=AnyObjectPtr, type_name=RuntimeType(origin='Option', args=[u32]))
+
+    # Call library function.
+    lib_function = lib.opendp_data__smd_curve_tradeoff
+    lib_function.argtypes = [AnyObjectPtr, AnyObjectPtr]
+    lib_function.restype = FfiResult
+
+    output = c_to_py(unwrap(lib_function(c_curve, c_num_approximations), Function))
 
     return output
 

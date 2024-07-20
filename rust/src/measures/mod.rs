@@ -11,6 +11,8 @@
 #[cfg(feature = "ffi")]
 pub(crate) mod ffi;
 
+mod f_dp;
+
 use std::{
     fmt::{Debug, Formatter},
     marker::PhantomData,
